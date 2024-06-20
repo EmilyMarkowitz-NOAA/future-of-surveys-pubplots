@@ -46,13 +46,30 @@ googledrive::drive_auth()
 googledrive_dl <- "https://docs.google.com/spreadsheets/d/1l6a9Wb3M1PQV9UwHk7Ddfiiuq5U5lVW5"
 
 googledrive::drive_download(file = googledrive::as_id(googledrive_dl),  #"gap_survey_progression.csv",
-                              # type = "xlsx", 
-                              overwrite = TRUE, 
-                              path = here::here("data/data.xlsx"))
+                            # type = "xlsx", 
+                            overwrite = TRUE, 
+                            path = here::here("data/data.xlsx"))
 
 dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"), sheet = "Papers") %>% 
   janitor::clean_names()
 ```
+
+figure base (just for making following plots consistent)
+
+```{r figure-base}
+figure_base <- ggplot2::ggplot()  + 
+  theme_bw()  + 
+  ggplot2::theme(
+    panel.border = element_rect(colour = "grey50", fill=NA, linewidth=.5), 
+    plot.margin=unit(c(0,0,0,0), "cm") , 
+    panel.background = element_rect(fill = "white"), #grey95
+    legend.position="bottom",
+    legend.direction="horizontal",
+    legend.justification="left",
+    legend.background = element_blank(),
+    legend.box.background = element_blank())
+```
+
 
 Plot of freq and year, by region
 
@@ -69,22 +86,38 @@ Plot of freq and year, by country
 Plot of freq and year, by journal
 
 ```{r}
+# which publications have less than X (10?) hits over the whole timeseries?
+temp <- dat %>% 
+  dplyr::group_by(source_title) %>% 
+  dplyr::summarise(freq = n()) %>% 
+  dplyr::ungroup() %>%
+  dplyr::arrange(desc(freq)) %>%
+  dplyr::mutate(source_title1 = ifelse(freq <= 20, "Other", source_title)) 
 
 dat0 <- dat %>% 
-  dplyr::group_by(publication_year, source_title) %>% 
-  dplyr::summarise(freq = n())
+  dplyr::left_join(temp) %>% 
+  dplyr::group_by(publication_year, source_title1) %>% 
+  dplyr::summarise(freq = n()) %>% 
+  dplyr::ungroup() %>%
+  dplyr::arrange(desc(freq))
 
-fig <- ggplot2::ggplot(
-  data = dat0, 
-  mapping = aes(x = publication_year, 
-                y = freq, 
-                color = source_title)) + 
-  ggplot2::geom_line(show.legend = FALSE)
+
+fig <- figure_base + 
+  ggplot2::geom_line(
+    data = dat0, 
+    # show.legend = FALSE, 
+    mapping = aes(x = publication_year, 
+                  y = freq, 
+                  color = source_title1)) + 
+  ggplot2::scale_color_viridis_d(option = "mako", begin = .1, end = .7) + 
+  xlab("Year") +
+  ylab("Frequency") +
+  ggtitle("Plot of freqency and year, by journal")
 
 fig
 ```
 
-Plot by country
+Plot of freq and year, by NOAA and not NOAA affliated coauthor
 
 ```{r}
 
