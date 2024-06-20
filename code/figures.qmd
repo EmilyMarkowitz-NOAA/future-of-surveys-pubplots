@@ -1,29 +1,57 @@
 ---
 title: "Publication Plots"
+editor: source
+  author:
+    - name: Emily Markowitz
+      email: Emily.Markowitz@noaa.gov 
+      note: https://github.com/afsc-gap-products
+      affiliations:
+        - name: NOAA Fisheres Alaska Fisheries Science Center
+          department: Groundfish Assessment Program, Bering Sea Survey Team
+    - name: Catherine Foley
+      email: Catherine.Foley@noaa.gov 
+      note: https://github.com/noaa-nefsc
+      affiliations:
+        - name: NOAA Fisheres Northeast Fisheries Science Center
+          department: Groundfish Assessment Program
+date: "`r paste0(format(Sys.time(), '%B %d, %Y'))`"
 format: html
-editor: visual
+toc-location: body
+toc-depth: 3
 ---
-
-## Data
 
 Search query: https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1 
 
-```{r load-data}
-library(googledrive)
-library(here)
+```{r load-libraries}
+PKG <- c("devtools", "googledrive", "ggplot2", 
+         "magrittr", "here", "dplyr", "sf", "readxl", 
+         "janitor")
+for (p in PKG) {
+  if(!require(p,character.only = TRUE)) {  
+    install.packages(p, verbose = FALSE)
+    require(p,character.only = TRUE)}
+}
+```
 
+
+```{r load-data}
+
+# SIGN INTO GOOGLE DRIVE--------------------------------------------------------
+googledrive_dl <- TRUE
+googledrive::drive_deauth()
+googledrive::drive_auth()
+2
+
+# Download google spreadsheet --------------------------------------------------
 googledrive_dl <- "https://docs.google.com/spreadsheets/d/1l6a9Wb3M1PQV9UwHk7Ddfiiuq5U5lVW5"
 
-if (googledrive_dl) {
-  # https://docs.google.com/spreadsheets/d/16CJA6hKOcN1a3QNpSu3d2nTGmrmBeCdmmBCcQlLVqrE/edit?usp=sharing
-  googledrive::drive_download(file = googledrive::as_id(googledrive_dl),  #"gap_survey_progression.csv",
-                              type = "xlsx", 
+googledrive::drive_download(file = googledrive::as_id(googledrive_dl),  #"gap_survey_progression.csv",
+                              # type = "xlsx", 
                               overwrite = TRUE, 
-                              path = here::here("/data/data.xlsx"))
-}
-a <- readxl::excel_sheets(path = paste0(dir_wd, "data/data.xlsx"))
-a <- a[grepl(pattern = ifelse(istest, "TEST", maxyr), x = a)]
-}
+                              path = here::here("data/data.xlsx"))
+
+dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"), sheet = "Papers") %>% 
+  janitor::clean_names()
 ```
 
 Plot of freq and year, by region
@@ -38,10 +66,22 @@ Plot of freq and year, by country
 
 ```
 
-Plot by country
+Plot of freq and year, by journal
 
 ```{r}
 
+dat0 <- dat %>% 
+  dplyr::group_by(publication_year, source_title) %>% 
+  dplyr::summarise(freq = n())
+
+fig <- ggplot2::ggplot(
+  data = dat0, 
+  mapping = aes(x = publication_year, 
+                y = freq, 
+                color = source_title)) + 
+  ggplot2::geom_line(show.legend = FALSE)
+
+fig
 ```
 
 Plot by country
