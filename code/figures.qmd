@@ -208,3 +208,31 @@ fig <- auto_plot(dat1 = dat_aff,
          plot = figure_print, width = 6, height = 6)
   fig
 ```
+
+keyword cloud
+
+```{r}
+# https://cran.r-project.org/web/packages/ggwordcloud/vignettes/ggwordcloud.html
+install.packages("ggwordcloud")
+library("ggwordcloud")
+
+dat_key <- dat %>% 
+  dplyr::select(author_keywords, publication_year) %>%
+  tidyr::separate(col = "author_keywords", sep = "; ", remove = FALSE, into = paste0("key_", 1:10)) %>% 
+  dplyr::select(-author_keywords) %>%
+  tidyr::pivot_longer(cols = paste0("key_", 1:10), names_to = "key_var", values_to = "key_val") %>%
+  dplyr::select(-key_var) %>% 
+  dplyr::filter(!is.na(key_val))
+
+fig <- ggplot2::ggplot(data = dat_key, 
+                       mapping = aes(label = key_val)) +
+  ggwordcloud::geom_text_wordcloud() +
+  scale_size_area(max_size = 30) +
+  theme_minimal()
+
+column0 = "key"
+  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+         plot = figure_print, width = 6, height = 6)
+  fig
+```
+
