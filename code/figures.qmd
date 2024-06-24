@@ -1,7 +1,7 @@
 ---
 title: "Publication Plots"
 editor: source
-  author:
+author:
     - name: Emily Markowitz
       email: Emily.Markowitz@noaa.gov 
       note: https://github.com/afsc-gap-products
@@ -54,9 +54,9 @@ dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"), sheet = "Papers") 
   janitor::clean_names() 
 ```
 
-figure base (just for making following plots consistent)
+figure_printure base (just for making following plots consistent)
 
-```{r figure-base}
+```{r figure_printure-base}
 figure_base <- ggplot2::ggplot()  +
   theme_bw()  +
   ggplot2::theme(
@@ -67,6 +67,7 @@ figure_base <- ggplot2::ggplot()  +
     legend.direction="horizontal",
     legend.justification="left",
     legend.background = element_blank(),
+    legend.location = "right", 
     legend.box.background = element_blank())
 ```
 
@@ -90,7 +91,7 @@ auto_plot <- function(dat1, column0, other_cutoff = 20, title0 = "") {
     dplyr::arrange(desc(freq))
   
   
-  fig <- figure_base + 
+  figure_print <- figure_base + 
     ggplot2::geom_line(
       data = dat0, 
       # show.legend = FALSE, 
@@ -102,7 +103,7 @@ auto_plot <- function(dat1, column0, other_cutoff = 20, title0 = "") {
     ylab("Frequency") +
     ggtitle(title0) 
   
-  return(fig)
+  return(figure_print)
 }
 ```
 
@@ -110,28 +111,28 @@ Plot of freq and year, by research field
 
 ```{r}
 column0 = "research_field"
-fig <- auto_plot(dat1 = dat_aff, 
+figure_print <- auto_plot(dat1 = dat, 
                  column0 = column0, 
                  other_cutoff = 20, 
                  title0 = "Plot of freqency and year, by research field")
 
-  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
          plot = figure_print, width = 6, height = 6)
-  fig
+  figure_print
 ```
 
 Plot of freq and year, by gear type
 
 ```{r}
 column0 = "gear_type"
-fig <- auto_plot(dat1 = dat_aff, 
+figure_print <- auto_plot(dat1 = dat, 
                  column0 = column0, 
                  other_cutoff = 20, 
                  title0 = "Plot of freqency and year, by location")
 
-  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
          plot = figure_print, width = 6, height = 6)
-  fig
+  figure_print
 ```
 
 Plot of freq and year, by region
@@ -139,14 +140,14 @@ Plot of freq and year, by region
 ```{r}
 
 column0 = "location"
-fig <- auto_plot(dat1 = dat_aff, 
+figure_print <- auto_plot(dat1 = dat, 
                  column0 = column0, 
                  other_cutoff = 20, 
                  title0 = "Plot of freqency and year, by location")
 
-  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
          plot = figure_print, width = 6, height = 6)
-  fig
+  figure_print
 ```
 
 Plot of freq and year, by journal
@@ -154,14 +155,14 @@ Plot of freq and year, by journal
 ```{r}
 # which publications have less than X (10?) hits over the whole timeseries?
 column0 = "source_title"
-fig <- auto_plot(dat1 = dat_aff, 
+figure_print <- auto_plot(dat1 = dat, 
                  column0 = column0, 
                  other_cutoff = 20, 
                  title0 = "Plot of freqency and year, by journal")
 
-  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
          plot = figure_print, width = 6, height = 6)
-  fig
+  figure_print
 ```
 
 Plot of freq and year, by affiliation
@@ -179,14 +180,14 @@ dat_aff <- dat %>%
   # dplyr::filter(!is.na(freq))
 
 column0 = "aff_val"
-fig <- auto_plot(dat1 = dat_aff, 
+figure_print <- auto_plot(dat1 = dat_aff, 
                  column0 = column0, 
                  other_cutoff = 20, 
                  title0 = "Plot of freq and year, by affiliation")
 
-  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
          plot = figure_print, width = 6, height = 6)
-  fig
+  figure_print
 ```
 
 Plot of freq and year, by government, academic, and industry affiliated coauthor
@@ -199,21 +200,59 @@ dat_aff <- dat_aff %>%
   ))
 
 column0 = "aff_val1"
-fig <- auto_plot(dat1 = dat_aff, 
+figure_print <- auto_plot(dat1 = dat_aff, 
                  column0 = column0, 
                  other_cutoff = 20, 
                  title0 = "Plot of freq and year, by affiliation")
 
-  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
          plot = figure_print, width = 6, height = 6)
-  fig
+  figure_print
 ```
 
-keyword cloud
+Plot of freq and year, by key words
+
+> need to find a way to group similar topics
 
 ```{r}
+dat_key <- dat %>% 
+  dplyr::select(author_keywords, publication_year) %>%
+  tidyr::separate(col = "author_keywords", sep = "; ", remove = FALSE, into = paste0("key_", 1:10)) %>% 
+  dplyr::select(-author_keywords) %>%
+  tidyr::pivot_longer(cols = paste0("key_", 1:10), names_to = "key_var", values_to = "key_val") %>%
+  dplyr::select(-key_var) %>% 
+  dplyr::filter(!is.na(key_val)) %>% 
+  dplyr::mutate(key_val = tolower(key_val), 
+               key_val = gsub(x = key_val, pattern = "-", replacement = " ") , 
+               key_val1 = dplyr::case_when(
+                 key_val == "fisheries" ~ "fisheries (and simlar)",
+                 key_val == "fishery" ~ "fisheries (and simlar)", 
+                 grepl(x = key_val, pattern = "coral") ~ "coral (and similar)", 
+                 grepl(x = key_val, pattern = "covid") ~ "covid (and similar)"
+                 # key_val == "fisheries" ~ "fisheries (and simlar)"
+                 # key_val == "fisheries" ~ "fisheries (and simlar)"
+               )
+               ) %>% 
+  dplyr::arrange(key_val)
+
+sort(unique(dat_key$key_val))
+sort(unique(dat_key$key_val1))
+
+column0 = "key_val"
+figure_print <- auto_plot(dat1 = dat_key, 
+                 column0 = column0, 
+                 other_cutoff = 10, 
+                 title0 = "Plot of freq and year, by key word")
+
+  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
+         plot = figure_print, width = 6, height = 6)
+  figure_print
+```
+keyword cloud
+
+```{r, eval = FALSE}
 # https://cran.r-project.org/web/packages/ggwordcloud/vignettes/ggwordcloud.html
-install.packages("ggwordcloud")
+# install.packages("ggwordcloud")
 library("ggwordcloud")
 
 dat_key <- dat %>% 
@@ -224,15 +263,14 @@ dat_key <- dat %>%
   dplyr::select(-key_var) %>% 
   dplyr::filter(!is.na(key_val))
 
-fig <- ggplot2::ggplot(data = dat_key, 
+figure_print <- figure_base + 
+  ggwordcloud::geom_text_wordcloud(data = dat_key, 
                        mapping = aes(label = key_val)) +
-  ggwordcloud::geom_text_wordcloud() +
   scale_size_area(max_size = 30) +
   theme_minimal()
 
 column0 = "key"
-  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
          plot = figure_print, width = 6, height = 6)
-  fig
+  figure_print
 ```
-
