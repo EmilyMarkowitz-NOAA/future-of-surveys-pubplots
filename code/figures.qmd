@@ -18,11 +18,15 @@ date: "`r paste0(format(Sys.time(), '%B %d, %Y'))`"
 format: html
 toc-location: body
 toc-depth: 3
+message: FALSE
+warning: FALSE
+error: FALSE
+comment: FALSE
 ---
 
 Search query: https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1 
 
-```{r load-libraries}
+```{r load-libraries, include = FALSE}
 PKG <- c("devtools", "googledrive", "ggplot2", 
          "magrittr", "here", "dplyr", "sf", "readxl", 
          "janitor")
@@ -34,14 +38,15 @@ for (p in PKG) {
 ```
 
 
-```{r load-data}
-
+```{r google-drive-sign-in, include = FALSE}
 # SIGN INTO GOOGLE DRIVE--------------------------------------------------------
 googledrive_dl <- TRUE
 googledrive::drive_deauth()
 googledrive::drive_auth()
 2
+```
 
+```{r load-data, echo = FALSE}
 # Download google spreadsheet --------------------------------------------------
 googledrive_dl <- "https://docs.google.com/spreadsheets/d/1l6a9Wb3M1PQV9UwHk7Ddfiiuq5U5lVW5"
 
@@ -56,7 +61,7 @@ dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"), sheet = "Papers") 
 
 figure_printure base (just for making following plots consistent)
 
-```{r figure_printure-base}
+```{r figure_printure-base, include = FALSE}
 figure_base <- ggplot2::ggplot()  +
   theme_bw()  +
   ggplot2::theme(
@@ -72,7 +77,7 @@ figure_base <- ggplot2::ggplot()  +
 ```
 
 
-```{r auto-plot-fnct}
+```{r auto-plot-fnct, include = FALSE}
 auto_plot <- function(dat1, column0, other_cutoff = 20, title0 = "") {
   
   dat0 <- dat1  %>% 
@@ -235,8 +240,8 @@ dat_key <- dat %>%
                ) %>% 
   dplyr::arrange(key_val)
 
-sort(unique(dat_key$key_val))
-sort(unique(dat_key$key_val1))
+# sort(unique(dat_key$key_val))
+# sort(unique(dat_key$key_val1))
 
 column0 = "key_val"
 figure_print <- auto_plot(dat1 = dat_key, 
