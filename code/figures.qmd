@@ -51,17 +51,17 @@ googledrive::drive_download(file = googledrive::as_id(googledrive_dl),  #"gap_su
                             path = here::here("data/data.xlsx"))
 
 dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"), sheet = "Papers") %>% 
-  janitor::clean_names()
+  janitor::clean_names() 
 ```
 
 figure base (just for making following plots consistent)
 
 ```{r figure-base}
-figure_base <- ggplot2::ggplot()  + 
-  theme_bw()  + 
+figure_base <- ggplot2::ggplot()  +
+  theme_bw()  +
   ggplot2::theme(
-    panel.border = element_rect(colour = "grey50", fill=NA, linewidth=.5), 
-    plot.margin=unit(c(0,0,0,0), "cm") , 
+    panel.border = element_rect(colour = "grey50", fill=NA, linewidth=.5),
+    plot.margin=unit(c(0,0,0,0), "cm") ,
     panel.background = element_rect(fill = "white"), #grey95
     legend.position="bottom",
     legend.direction="horizontal",
@@ -71,55 +71,140 @@ figure_base <- ggplot2::ggplot()  +
 ```
 
 
+```{r auto-plot-fnct}
+auto_plot <- function(dat1, column0, other_cutoff = 20, title0 = "") {
+  
+  dat0 <- dat1  %>% 
+    dplyr::rename(column = any_of(column0)) 
+  
+  dat0 <- dat0 %>% 
+    dplyr::left_join(dat0 %>% 
+                       dplyr::group_by(column) %>% 
+                       dplyr::summarise(freq = n()) %>% 
+                       dplyr::ungroup() %>%
+                       dplyr::arrange(desc(freq)) %>%
+                       dplyr::mutate(names0 = ifelse(freq <= other_cutoff, "Other", column)) ) %>% 
+    dplyr::group_by(publication_year, names0) %>% 
+    dplyr::summarise(freq = n()) %>% 
+    dplyr::ungroup() %>%
+    dplyr::arrange(desc(freq))
+  
+  
+  fig <- figure_base + 
+    ggplot2::geom_line(
+      data = dat0, 
+      # show.legend = FALSE, 
+      mapping = aes(x = publication_year, 
+                    y = freq, 
+                    color = names0)) + 
+    ggplot2::scale_color_viridis_d(name = "", option = "mako", begin = .1, end = .7) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0) 
+  
+  return(fig)
+}
+```
+
+Plot of freq and year, by research field
+
+```{r}
+column0 = "research_field"
+fig <- auto_plot(dat1 = dat_aff, 
+                 column0 = column0, 
+                 other_cutoff = 20, 
+                 title0 = "Plot of freqency and year, by research field")
+
+  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+         plot = figure_print, width = 6, height = 6)
+  fig
+```
+
+Plot of freq and year, by gear type
+
+```{r}
+column0 = "gear_type"
+fig <- auto_plot(dat1 = dat_aff, 
+                 column0 = column0, 
+                 other_cutoff = 20, 
+                 title0 = "Plot of freqency and year, by location")
+
+  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+         plot = figure_print, width = 6, height = 6)
+  fig
+```
+
 Plot of freq and year, by region
 
 ```{r}
 
-```
+column0 = "location"
+fig <- auto_plot(dat1 = dat_aff, 
+                 column0 = column0, 
+                 other_cutoff = 20, 
+                 title0 = "Plot of freqency and year, by location")
 
-Plot of freq and year, by country
-
-```{r}
-
+  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+         plot = figure_print, width = 6, height = 6)
+  fig
 ```
 
 Plot of freq and year, by journal
 
 ```{r}
 # which publications have less than X (10?) hits over the whole timeseries?
-temp <- dat %>% 
-  dplyr::group_by(source_title) %>% 
-  dplyr::summarise(freq = n()) %>% 
-  dplyr::ungroup() %>%
-  dplyr::arrange(desc(freq)) %>%
-  dplyr::mutate(source_title1 = ifelse(freq <= 20, "Other", source_title)) 
+column0 = "source_title"
+fig <- auto_plot(dat1 = dat_aff, 
+                 column0 = column0, 
+                 other_cutoff = 20, 
+                 title0 = "Plot of freqency and year, by journal")
 
-dat0 <- dat %>% 
-  dplyr::left_join(temp) %>% 
-  dplyr::group_by(publication_year, source_title1) %>% 
-  dplyr::summarise(freq = n()) %>% 
-  dplyr::ungroup() %>%
-  dplyr::arrange(desc(freq))
-
-
-fig <- figure_base + 
-  ggplot2::geom_line(
-    data = dat0, 
-    # show.legend = FALSE, 
-    mapping = aes(x = publication_year, 
-                  y = freq, 
-                  color = source_title1)) + 
-  ggplot2::scale_color_viridis_d(option = "mako", begin = .1, end = .7) + 
-  xlab("Year") +
-  ylab("Frequency") +
-  ggtitle("Plot of freqency and year, by journal")
-
-fig
+  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+         plot = figure_print, width = 6, height = 6)
+  fig
 ```
 
-Plot of freq and year, by NOAA and not NOAA affliated coauthor
+Plot of freq and year, by affiliation
 
 ```{r}
+dat_aff <- dat %>% 
+  dplyr::select(affiliations, publication_year) %>%
+  tidyr::separate(col = "affiliations", sep = "; ", remove = FALSE, into = paste0("aff_", 1:30)) %>% 
+  dplyr::select(-affiliations) %>%
+  tidyr::pivot_longer(cols = paste0("aff_", 1:30), names_to = "aff_var", values_to = "aff_val") %>%
+  dplyr::select(-aff_var) %>% 
+  dplyr::filter(!is.na(aff_val))
+  # dplyr::group_by(publication_year, aff_val) %>% 
+  # dplyr::summarise(freq = n()) %>% 
+  # dplyr::filter(!is.na(freq))
 
+column0 = "aff_val"
+fig <- auto_plot(dat1 = dat_aff, 
+                 column0 = column0, 
+                 other_cutoff = 20, 
+                 title0 = "Plot of freq and year, by affiliation")
+
+  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+         plot = figure_print, width = 6, height = 6)
+  fig
 ```
 
+Plot of freq and year, by government, academic, and industry affiliated coauthor
+
+```{r}
+dat_aff <- dat_aff %>% 
+  dplyr::mutate(aff_val1 = dplyr::case_when(
+    grepl(x = aff_val, pattern = "NOAA") ~ "NOAA",
+    grepl(x = aff_val, pattern = "National Oceanic and Atmospheric Administration") ~ "NOAA"
+  ))
+
+column0 = "aff_val1"
+fig <- auto_plot(dat1 = dat_aff, 
+                 column0 = column0, 
+                 other_cutoff = 20, 
+                 title0 = "Plot of freq and year, by affiliation")
+
+  ggsave(filename = here::here(paste0("fig-",column0,".png")),
+         plot = figure_print, width = 6, height = 6)
+  fig
+```
