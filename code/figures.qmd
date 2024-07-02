@@ -343,7 +343,7 @@ knitr::include_graphics(path = here::here("output", paste0("line-", column0,".pn
 #| label: location-line
 #| tbl-cap: "Plot of frequencyuency and year, by location. "
 
-column0 = "gear_type"
+column0 = "location"
 figure_print <- auto_plot_descr(dat1 = dat_descr, 
                           column0 = column0, 
                           other_cutoff = 0, 
