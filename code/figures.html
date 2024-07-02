@@ -36,6 +36,8 @@ ul.task-list li input[type="checkbox"] {
 <script src="figures_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="figures_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="figures_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<link href="figures_files/libs/tabwid-1.1.3/tabwid.css" rel="stylesheet">
+<script src="figures_files/libs/tabwid-1.1.3/tabwid.js"></script>
 
 
 </head>
@@ -93,43 +95,358 @@ ul.task-list li input[type="checkbox"] {
 
 <p>We conducted a literature review using the web of science citation system (search query: <a href="https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1" class="uri">https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1</a>). To be included in this analysis, each paper had to contain a long-term fisheries survey or pilot study of a new study Our search returned 1,803 entries, of which contained 2 duplicate results and 288 irrelevant results, leaving 95 relevant articles to categorize. The following categories were used in this analysis:</p>
 <p><strong>Gear Type</strong>: Fisheries-Dependant, Bottom Trawl, NA, Otter Trawl, Acoustics, Longline, Hook &amp; Line, 3D stereo camera (e.g., stereo-baited remote underwater video (S-BRUV)), Gillnets, None, Poly Nor’Eastern, four-seam, hard bottom, high-rise bottom trawl (AFSC BTS AI &amp; GOA), Grab samples, Beam Trawl, Traps, Pelagic net, Video, Multiple, Stock assessments, Bongo net, Fisher interviews, Advanced Tech, Uncrewed surface vehicle saildrone, Ichthyoplankton, Beach seine</p>
-<p><strong>Research topic</strong>: Socio-Econ, NA, Survey Design, Life History, Stock Assessment Model, Harvest Control Rules, Reference points, Species Distribution Model, Population Model, Model-Based Indicies, Combine Surveys, Otolith, Sampling design, Uncertainty, Climate change, Survey Statistics, Food web model, Wind Farm mitigation, Review, Oceanography, Editorial, Combine with Dependant, Catchability, Havest Control Rules, Bycatch, Emerging Methods, Recruitment, Design-based indicies, Histology, Outreach and Communication, Survey Mitigation, Ecosystem-based management, COVID-19, Essential Fish Habitat, Data availability</p>
-<p><strong>Location</strong>: Adriatic Sea, Mediterranean Sea, NA, China, NE Pacific, Pacific West Coast, Gulf of Mexico, Australia, Caribbean, NW Atlantic, Simulation, Baltic Sea, Russia, NE Atlantic, Brazil, South-NW Atlantic, MPA, Mid-NW Atlantic, Greater North Sea, Global, Antarctic, South Africa, Celtic Sea, English Channel, Iberian Coast, Barents Sea, Hawaii, Alaska</p>
+<p><strong>Research topic</strong>: Socio-Econ, NA, Survey Design, Life History, Stock Assessment Model, Harvest Control Rules, Reference points, Species Distribution Model, Population Model, Model-Based Indicies, Combine Surveys, Otolith, Sampling design, Uncertainty, Climate change, Survey Statistics, Food web model, Wind Farm mitigation, Review, Oceanography, Editorial, Combine with Dependant, Catchability, Havest Control Rules, Bycatch, Emerging Methods, Recruitment, Design-based indicies, Histology, Outreach and Communication, Survey Mitigation, Ecosystem-based management, Essential Fish Habitat, Data availability</p>
+<p><strong>Location</strong>: Adriatic Sea, Mediterranean Sea, NA, China, NE Pacific, Pacific West Coast, Gulf of Mexico, Australia, Caribbean, NW Atlantic, Simulation, Azores, Baltic Sea, Russia, NE Atlantic, Brazil, South-NW Atlantic, MPA, Mid-NW Atlantic, Greater North Sea, Global, Antarctic, South Africa, Celtic Sea, English Channel, Iberian Coast, Barents Sea, Hawaii, Alaska</p>
 <p><strong>Survey</strong>: MEDITS - EU-funded MEDIterranean Trawl Survey, NA, China - East China Sea, AFSC ATS - eastern Bering Sea, AFSC BTS - eastern Bering Sea, CA Pelagic shark longline survey, SESSF, NMFS SEAMAP Reef Fish Video Survey, the NMFS Panama City (Florida) survey, and the Fish and Wildlife Research Institute of the Florida Fish and Wildlife Conservation Commission survey, Simulation, AFSC BTS - Gulf of Alaska, AFSC BTS - Aleutian Islands, AFSC BTS - northern Bering Sea, MARMAP - Chevron Trap Survey, Study, Azorean bottom longline survey, Baltic International Trawl Survey, TINRO, Europe, NWFSC BTS, Brazil longline survey, CSIRO, NEFSC BTS, China - Haizhou Bay, SEAMAP, China - Yangtze River estuary, Greater North Sea International Otter Trawl Survey, BASS - hydroacoustic surveys Baltic Acoustic Spring Survey, BITS - Baltic International Trawl Survey, BIAS - Baltic International Acoustic Survey, Northern Ireland Ground Fish Survey, ICES Beam Trawl Survey, CalCOFI, RREAS - SWFSC Rockfish Recruitment and Ecosystem Assessment Survey, PRS - NWFSC coastal cooperative pre-recruit survey, NWFSC DFO ATS Hake, CCES - SWFSC nearshore acoustics California Current Ecosystem Survey, MARMAP - various gear, NWFSC Observer, DFO BTS - Scotian Shelf summer bottom trawl survey, SERFS - Southeast Reef Fish Survey, NEPTUNE cabled observatory, AFSC Observer, IPHC - Halibut Longline Assessment, ADFG - Southeast AK Sabelfish Longline Assessment, ICES UK - International Bottom Trawl Survey, Channel Ground Fish Survey, China - Shandong Peninsula, Queensland scallop survey, NEFSC Gulf of Maine Bottom Longline Survey, NMFS COASTSPAN Apex Predator Investigation, Georgia Department of Natural Resources’ Coastal Resources Division has used a stratified, AFSC BTS - Bering Sea Slope, AFSC EcoFOCI ichthyoplankton survey - eastern Bering Sea, TPWD - Texas Parks and Wildlife Department</p>
-<p><strong>Organism focus</strong>: Ecosystem, Fish, Shark, Reef fish, Simulation, Crab, Sea Turtles, NEFSC BTS, Lobster, NA, Scallops, ichthyoplankton, Clams, Varied</p>
+<p><strong>Organism focus</strong>: Ecosystem/nFish/nShark/nReef fish/nSimulation/nCrab/nSea Turtles/nNEFSC BTS/nLobster/nNA/nScallops/nichthyoplankton/nClams/nVaried</p>
 <!-- figure_print base (just for making following plots consistent) -->
-<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by research field. ">
+<section id="gear_type" class="level2">
+<h2 class="anchored" data-anchor-id="gear_type">gear_type</h2>
+<div class="cell">
 <div class="cell-output-display">
-<p><img src="../output/line-research_field.png" class="img-fluid" width="900"></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/line-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Line plot of frequency and year, by research field.</figcaption>
+</figure>
 </div>
 </div>
-<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by gear type. ">
+</div>
+<div class="cell">
 <div class="cell-output-display">
-<p><img src="../output/line-gear_type.png" class="img-fluid" width="900"></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/bar-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Bar plot of frequency and year, by research field.</figcaption>
+</figure>
 </div>
 </div>
-<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by location. ">
+</div>
+<div class="cell">
 <div class="cell-output-display">
-<p><img src="../output/line-location.png" class="img-fluid" width="900"></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/area-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Area plot of frequency and year, by research field.</figcaption>
+</figure>
 </div>
 </div>
-<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by survey ">
+</div>
+<div class="cell">
 <div class="cell-output-display">
-<p><img src="../output/line-survey.png" class="img-fluid" width="900"></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/line-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Line plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
 </div>
 </div>
-<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by organism ">
+</div>
+<div class="cell">
 <div class="cell-output-display">
-<p><img src="../output/line-organism.png" class="img-fluid" width="900"></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/bar-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Bar plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
 </div>
 </div>
-<p>Plot of frequency and year, by journal</p>
-<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by organism ">
+</div>
+<div class="cell">
 <div class="cell-output-display">
-<p><img src="../output/line-source_title.png" class="img-fluid" width="900"></p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/area-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Area plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
 </div>
 </div>
-<p>Plot of frequency and year, by affiliation</p>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+
+<div class="tabwid"><style>.cl-652bafa2{}.cl-64da0670{font-family:'Arial';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-64da0698{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-64f8b4d0{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-64f8b4ee{margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-64f9250a{width:0.75in;background-color:rgba(207, 207, 207, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-64f92528{width:0.75in;background-color:rgba(207, 207, 207, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-64f92532{width:0.75in;background-color:rgba(239, 239, 239, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-64f9253c{width:0.75in;background-color:rgba(239, 239, 239, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-64f92546{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-64f92547{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style><table data-quarto-disable-processing="true" class="cl-652bafa2"><caption><p>Frequency and year, by research field.</p></caption><thead><tr style="overflow-wrap:break-word;"><th class="cl-64f9250a"><p class="cl-64f8b4d0"><span class="cl-64da0670">val</span></p></th><th class="cl-64f92528"><p class="cl-64f8b4ee"><span class="cl-64da0670">freq</span></p></th><th class="cl-64f92528"><p class="cl-64f8b4ee"><span class="cl-64da0670">cum_freq</span></p></th></tr></thead><tbody><tr style="overflow-wrap:break-word;"><td class="cl-64f92532"><p class="cl-64f8b4d0"><span class="cl-64da0698">Population Biology/Stock Assessment</span></p></td><td class="cl-64f9253c"><p class="cl-64f8b4ee"><span class="cl-64da0698">29</span></p></td><td class="cl-64f9253c"><p class="cl-64f8b4ee"><span class="cl-64da0698">56</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-64f92546"><p class="cl-64f8b4d0"><span class="cl-64da0698">Methods/Statistics/Design</span></p></td><td class="cl-64f92547"><p class="cl-64f8b4ee"><span class="cl-64da0698">17</span></p></td><td class="cl-64f92547"><p class="cl-64f8b4ee"><span class="cl-64da0698">27</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-64f92532"><p class="cl-64f8b4d0"><span class="cl-64da0698">Spatial Ecology</span></p></td><td class="cl-64f9253c"><p class="cl-64f8b4ee"><span class="cl-64da0698">16</span></p></td><td class="cl-64f9253c"><p class="cl-64f8b4ee"><span class="cl-64da0698">73</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-64f92546"><p class="cl-64f8b4d0"><span class="cl-64da0698">Life History</span></p></td><td class="cl-64f92547"><p class="cl-64f8b4ee"><span class="cl-64da0698">7</span></p></td><td class="cl-64f92547"><p class="cl-64f8b4ee"><span class="cl-64da0698">9</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-64f92532"><p class="cl-64f8b4d0"><span class="cl-64da0698">Ecosystems</span></p></td><td class="cl-64f9253c"><p class="cl-64f8b4ee"><span class="cl-64da0698">2</span></p></td><td class="cl-64f9253c"><p class="cl-64f8b4ee"><span class="cl-64da0698">2</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-64f92546"><p class="cl-64f8b4d0"><span class="cl-64da0698">Management (Quantitative)</span></p></td><td class="cl-64f92547"><p class="cl-64f8b4ee"><span class="cl-64da0698">1</span></p></td><td class="cl-64f92547"><p class="cl-64f8b4ee"><span class="cl-64da0698">10</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-64f92532"><p class="cl-64f8b4d0"><span class="cl-64da0698">Social Sciences</span></p></td><td class="cl-64f9253c"><p class="cl-64f8b4ee"><span class="cl-64da0698">1</span></p></td><td class="cl-64f9253c"><p class="cl-64f8b4ee"><span class="cl-64da0698">57</span></p></td></tr></tbody></table></div>
+</div>
+</div>
+</section>
+<section id="location" class="level2">
+<h2 class="anchored" data-anchor-id="location">location</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/line-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Line plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/bar-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Bar plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/area-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Area plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/line-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Line plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/bar-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Bar plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/area-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Area plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+
+<div class="tabwid"><style>.cl-6d89b73e{}.cl-6d553554{font-family:'Arial';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-6d553572{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-6d6566cc{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-6d6566e0{margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-6d65db48{width:0.75in;background-color:rgba(207, 207, 207, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-6d65db66{width:0.75in;background-color:rgba(207, 207, 207, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-6d65db70{width:0.75in;background-color:rgba(239, 239, 239, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-6d65db84{width:0.75in;background-color:rgba(239, 239, 239, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-6d65db8e{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-6d65db8f{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style><table data-quarto-disable-processing="true" class="cl-6d89b73e"><caption><p>Frequency and year, by research field.</p></caption><thead><tr style="overflow-wrap:break-word;"><th class="cl-6d65db48"><p class="cl-6d6566cc"><span class="cl-6d553554">val</span></p></th><th class="cl-6d65db66"><p class="cl-6d6566e0"><span class="cl-6d553554">freq</span></p></th><th class="cl-6d65db66"><p class="cl-6d6566e0"><span class="cl-6d553554">cum_freq</span></p></th></tr></thead><tbody><tr style="overflow-wrap:break-word;"><td class="cl-6d65db70"><p class="cl-6d6566cc"><span class="cl-6d553572">Population Biology/Stock Assessment</span></p></td><td class="cl-6d65db84"><p class="cl-6d6566e0"><span class="cl-6d553572">29</span></p></td><td class="cl-6d65db84"><p class="cl-6d6566e0"><span class="cl-6d553572">56</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-6d65db8e"><p class="cl-6d6566cc"><span class="cl-6d553572">Methods/Statistics/Design</span></p></td><td class="cl-6d65db8f"><p class="cl-6d6566e0"><span class="cl-6d553572">17</span></p></td><td class="cl-6d65db8f"><p class="cl-6d6566e0"><span class="cl-6d553572">27</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-6d65db70"><p class="cl-6d6566cc"><span class="cl-6d553572">Spatial Ecology</span></p></td><td class="cl-6d65db84"><p class="cl-6d6566e0"><span class="cl-6d553572">16</span></p></td><td class="cl-6d65db84"><p class="cl-6d6566e0"><span class="cl-6d553572">73</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-6d65db8e"><p class="cl-6d6566cc"><span class="cl-6d553572">Life History</span></p></td><td class="cl-6d65db8f"><p class="cl-6d6566e0"><span class="cl-6d553572">7</span></p></td><td class="cl-6d65db8f"><p class="cl-6d6566e0"><span class="cl-6d553572">9</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-6d65db70"><p class="cl-6d6566cc"><span class="cl-6d553572">Ecosystems</span></p></td><td class="cl-6d65db84"><p class="cl-6d6566e0"><span class="cl-6d553572">2</span></p></td><td class="cl-6d65db84"><p class="cl-6d6566e0"><span class="cl-6d553572">2</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-6d65db8e"><p class="cl-6d6566cc"><span class="cl-6d553572">Management (Quantitative)</span></p></td><td class="cl-6d65db8f"><p class="cl-6d6566e0"><span class="cl-6d553572">1</span></p></td><td class="cl-6d65db8f"><p class="cl-6d6566e0"><span class="cl-6d553572">10</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-6d65db70"><p class="cl-6d6566cc"><span class="cl-6d553572">Social Sciences</span></p></td><td class="cl-6d65db84"><p class="cl-6d6566e0"><span class="cl-6d553572">1</span></p></td><td class="cl-6d65db84"><p class="cl-6d6566e0"><span class="cl-6d553572">57</span></p></td></tr></tbody></table></div>
+</div>
+</div>
+</section>
+<section id="research_field" class="level2">
+<h2 class="anchored" data-anchor-id="research_field">research_field</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/line-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Line plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/bar-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Bar plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/area-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Area plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/line-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Line plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/bar-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Bar plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/area-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Area plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+
+<div class="tabwid"><style>.cl-7b83d2c0{}.cl-7a916bca{font-family:'Arial';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-7a916be8{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-7ae672e6{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-7ae6730e{margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-7ae9b9ce{width:0.75in;background-color:rgba(207, 207, 207, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7ae9b9ec{width:0.75in;background-color:rgba(207, 207, 207, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7ae9ba00{width:0.75in;background-color:rgba(239, 239, 239, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7ae9ba0a{width:0.75in;background-color:rgba(239, 239, 239, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7ae9ba14{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7ae9ba1e{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style><table data-quarto-disable-processing="true" class="cl-7b83d2c0"><caption><p>Frequency and year, by research field.</p></caption><thead><tr style="overflow-wrap:break-word;"><th class="cl-7ae9b9ce"><p class="cl-7ae672e6"><span class="cl-7a916bca">val</span></p></th><th class="cl-7ae9b9ec"><p class="cl-7ae6730e"><span class="cl-7a916bca">freq</span></p></th><th class="cl-7ae9b9ec"><p class="cl-7ae6730e"><span class="cl-7a916bca">cum_freq</span></p></th></tr></thead><tbody><tr style="overflow-wrap:break-word;"><td class="cl-7ae9ba00"><p class="cl-7ae672e6"><span class="cl-7a916be8">Population Biology/Stock Assessment</span></p></td><td class="cl-7ae9ba0a"><p class="cl-7ae6730e"><span class="cl-7a916be8">29</span></p></td><td class="cl-7ae9ba0a"><p class="cl-7ae6730e"><span class="cl-7a916be8">56</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-7ae9ba14"><p class="cl-7ae672e6"><span class="cl-7a916be8">Methods/Statistics/Design</span></p></td><td class="cl-7ae9ba1e"><p class="cl-7ae6730e"><span class="cl-7a916be8">17</span></p></td><td class="cl-7ae9ba1e"><p class="cl-7ae6730e"><span class="cl-7a916be8">27</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-7ae9ba00"><p class="cl-7ae672e6"><span class="cl-7a916be8">Spatial Ecology</span></p></td><td class="cl-7ae9ba0a"><p class="cl-7ae6730e"><span class="cl-7a916be8">16</span></p></td><td class="cl-7ae9ba0a"><p class="cl-7ae6730e"><span class="cl-7a916be8">73</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-7ae9ba14"><p class="cl-7ae672e6"><span class="cl-7a916be8">Life History</span></p></td><td class="cl-7ae9ba1e"><p class="cl-7ae6730e"><span class="cl-7a916be8">7</span></p></td><td class="cl-7ae9ba1e"><p class="cl-7ae6730e"><span class="cl-7a916be8">9</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-7ae9ba00"><p class="cl-7ae672e6"><span class="cl-7a916be8">Ecosystems</span></p></td><td class="cl-7ae9ba0a"><p class="cl-7ae6730e"><span class="cl-7a916be8">2</span></p></td><td class="cl-7ae9ba0a"><p class="cl-7ae6730e"><span class="cl-7a916be8">2</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-7ae9ba14"><p class="cl-7ae672e6"><span class="cl-7a916be8">Management (Quantitative)</span></p></td><td class="cl-7ae9ba1e"><p class="cl-7ae6730e"><span class="cl-7a916be8">1</span></p></td><td class="cl-7ae9ba1e"><p class="cl-7ae6730e"><span class="cl-7a916be8">10</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-7ae9ba00"><p class="cl-7ae672e6"><span class="cl-7a916be8">Social Sciences</span></p></td><td class="cl-7ae9ba0a"><p class="cl-7ae6730e"><span class="cl-7a916be8">1</span></p></td><td class="cl-7ae9ba0a"><p class="cl-7ae6730e"><span class="cl-7a916be8">57</span></p></td></tr></tbody></table></div>
+</div>
+</div>
+</section>
+<section id="organism" class="level2">
+<h2 class="anchored" data-anchor-id="organism">organism</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/line-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Line plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/bar-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Bar plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/area-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Area plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/line-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Line plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/bar-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Bar plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/area-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Area plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+
+<div class="tabwid"><style>.cl-8b0ec272{}.cl-8a2a9c3c{font-family:'Arial';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-8a2a9c6e{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-8a7024d2{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-8a7024fa{margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-8a717ab2{width:0.75in;background-color:rgba(207, 207, 207, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-8a717ada{width:0.75in;background-color:rgba(207, 207, 207, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-8a717ae4{width:0.75in;background-color:rgba(239, 239, 239, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-8a717af8{width:0.75in;background-color:rgba(239, 239, 239, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-8a717b0c{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-8a717b16{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style><table data-quarto-disable-processing="true" class="cl-8b0ec272"><caption><p>Frequency and year, by research field.</p></caption><thead><tr style="overflow-wrap:break-word;"><th class="cl-8a717ab2"><p class="cl-8a7024d2"><span class="cl-8a2a9c3c">val</span></p></th><th class="cl-8a717ada"><p class="cl-8a7024fa"><span class="cl-8a2a9c3c">freq</span></p></th><th class="cl-8a717ada"><p class="cl-8a7024fa"><span class="cl-8a2a9c3c">cum_freq</span></p></th></tr></thead><tbody><tr style="overflow-wrap:break-word;"><td class="cl-8a717ae4"><p class="cl-8a7024d2"><span class="cl-8a2a9c6e">Population Biology/Stock Assessment</span></p></td><td class="cl-8a717af8"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">29</span></p></td><td class="cl-8a717af8"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">56</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-8a717b0c"><p class="cl-8a7024d2"><span class="cl-8a2a9c6e">Methods/Statistics/Design</span></p></td><td class="cl-8a717b16"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">17</span></p></td><td class="cl-8a717b16"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">27</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-8a717ae4"><p class="cl-8a7024d2"><span class="cl-8a2a9c6e">Spatial Ecology</span></p></td><td class="cl-8a717af8"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">16</span></p></td><td class="cl-8a717af8"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">73</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-8a717b0c"><p class="cl-8a7024d2"><span class="cl-8a2a9c6e">Life History</span></p></td><td class="cl-8a717b16"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">7</span></p></td><td class="cl-8a717b16"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">9</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-8a717ae4"><p class="cl-8a7024d2"><span class="cl-8a2a9c6e">Ecosystems</span></p></td><td class="cl-8a717af8"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">2</span></p></td><td class="cl-8a717af8"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">2</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-8a717b0c"><p class="cl-8a7024d2"><span class="cl-8a2a9c6e">Management (Quantitative)</span></p></td><td class="cl-8a717b16"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">1</span></p></td><td class="cl-8a717b16"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">10</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-8a717ae4"><p class="cl-8a7024d2"><span class="cl-8a2a9c6e">Social Sciences</span></p></td><td class="cl-8a717af8"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">1</span></p></td><td class="cl-8a717af8"><p class="cl-8a7024fa"><span class="cl-8a2a9c6e">57</span></p></td></tr></tbody></table></div>
+</div>
+</div>
+</section>
+<section id="survey" class="level2">
+<h2 class="anchored" data-anchor-id="survey">survey</h2>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/line-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Line plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/bar-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Bar plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/area-research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Area plot of frequency and year, by research field.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/line-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Line plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/bar-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Bar plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../output/area-condensed_research_field.png" class="img-fluid figure-img" width="900"></p>
+<figcaption class="figure-caption">Area plot of frequency and year, by research field. [Condensed Categories]</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output-display">
+
+<div class="tabwid"><style>.cl-9c2c82c4{}.cl-9bd24e9e{font-family:'Arial';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-9bd24ec6{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-9bfc4fdc{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-9bfc4ffa{margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-9bfcc8c2{width:0.75in;background-color:rgba(207, 207, 207, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-9bfcc8e0{width:0.75in;background-color:rgba(207, 207, 207, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-9bfcc8f4{width:0.75in;background-color:rgba(239, 239, 239, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-9bfcc8f5{width:0.75in;background-color:rgba(239, 239, 239, 1.00);vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-9bfcc8fe{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-9bfcc908{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style><table data-quarto-disable-processing="true" class="cl-9c2c82c4"><caption><p>Frequency and year, by research field.</p></caption><thead><tr style="overflow-wrap:break-word;"><th class="cl-9bfcc8c2"><p class="cl-9bfc4fdc"><span class="cl-9bd24e9e">val</span></p></th><th class="cl-9bfcc8e0"><p class="cl-9bfc4ffa"><span class="cl-9bd24e9e">freq</span></p></th><th class="cl-9bfcc8e0"><p class="cl-9bfc4ffa"><span class="cl-9bd24e9e">cum_freq</span></p></th></tr></thead><tbody><tr style="overflow-wrap:break-word;"><td class="cl-9bfcc8f4"><p class="cl-9bfc4fdc"><span class="cl-9bd24ec6">Population Biology/Stock Assessment</span></p></td><td class="cl-9bfcc8f5"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">29</span></p></td><td class="cl-9bfcc8f5"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">56</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-9bfcc8fe"><p class="cl-9bfc4fdc"><span class="cl-9bd24ec6">Methods/Statistics/Design</span></p></td><td class="cl-9bfcc908"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">17</span></p></td><td class="cl-9bfcc908"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">27</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-9bfcc8f4"><p class="cl-9bfc4fdc"><span class="cl-9bd24ec6">Spatial Ecology</span></p></td><td class="cl-9bfcc8f5"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">16</span></p></td><td class="cl-9bfcc8f5"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">73</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-9bfcc8fe"><p class="cl-9bfc4fdc"><span class="cl-9bd24ec6">Life History</span></p></td><td class="cl-9bfcc908"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">7</span></p></td><td class="cl-9bfcc908"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">9</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-9bfcc8f4"><p class="cl-9bfc4fdc"><span class="cl-9bd24ec6">Ecosystems</span></p></td><td class="cl-9bfcc8f5"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">2</span></p></td><td class="cl-9bfcc8f5"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">2</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-9bfcc8fe"><p class="cl-9bfc4fdc"><span class="cl-9bd24ec6">Management (Quantitative)</span></p></td><td class="cl-9bfcc908"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">1</span></p></td><td class="cl-9bfcc908"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">10</span></p></td></tr><tr style="overflow-wrap:break-word;"><td class="cl-9bfcc8f4"><p class="cl-9bfc4fdc"><span class="cl-9bd24ec6">Social Sciences</span></p></td><td class="cl-9bfcc8f5"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">1</span></p></td><td class="cl-9bfcc8f5"><p class="cl-9bfc4ffa"><span class="cl-9bd24ec6">57</span></p></td></tr></tbody></table></div>
+</div>
+</div>
+</section>
+<section id="old-kind-of" class="level1">
+<h1>OLD (kind of)</h1>
 <div class="cell" data-tbl-cap="Plot of frequencyuency and year, by affiliation ">
 <div class="cell-output-display">
 <p><img src="../output/line-aff_val.png" class="img-fluid" width="900"></p>
@@ -157,6 +474,7 @@ ul.task-list li input[type="checkbox"] {
 <p><img src="../output/map-location.png" class="img-fluid" width="900"></p>
 </div>
 </div>
+</section>
 
 </main>
 <!-- /main column -->
