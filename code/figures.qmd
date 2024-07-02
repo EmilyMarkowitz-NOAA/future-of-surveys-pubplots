@@ -183,7 +183,7 @@ We conducted a literature review using the web of science citation system (searc
 `r paste0(unique(dat_descr$val[dat_descr$var == "survey"]), collapse = ", ")`
 
 **Organism focus**: 
-`r paste0(unique(dat_descr$val[dat_descr$var == "organism"]), collapse = ", ")`
+`r paste0(unique(dat_descr$val[dat_descr$var == "organism"]), collapse = "/n")`
 
 <!-- figure_print base (just for making following plots consistent) -->
   
@@ -267,8 +267,7 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
     dplyr::ungroup() %>%
     dplyr::arrange(desc(freq)) %>% 
     dplyr::filter(!is.na(val)) %>% 
-    dplyr::mutate(val1 = paste0(val, " (", freq, ")")) %>% 
-    dplyr::select(-freq)
+    dplyr::mutate(val1 = paste0(val, " (", freq, ")"))
   
   dat_names$val1 <- factor(x = dat_names$val1,
                            levels = unique(dat_names$val1), 
@@ -276,7 +275,7 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
                              ordered = TRUE)
   
   # prepare frequency data
-  dat0 <- dat0 %>% 
+  dat00 <- dat0 %>% 
     dplyr::left_join(dat0 %>% 
                        dplyr::group_by(val) %>% 
                        dplyr::summarise(freq = n()) %>% 
@@ -288,12 +287,13 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
     dplyr::ungroup() %>%
     dplyr::arrange(desc(freq))  %>% 
     dplyr::filter(!is.na(val)) %>% 
-    dplyr::left_join(dat_names)
+    dplyr::left_join(dat_names %>% 
+    dplyr::select(-freq))
   
   
-  figure_print <- figure_base + 
+  figure_line <- figure_base + 
     ggplot2::geom_line(
-      data = dat0, 
+      data = dat00, 
       # show.legend = FALSE, 
       mapping = aes(x = publication_year, 
                     y = freq, 
@@ -305,9 +305,38 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
     ggtitle(title0) 
   
   ggsave(filename = here::here("output", paste0("line-", column0,".png")),
-         plot = figure_print, width = 6, height = 6)
+         plot = figure_line, width = 6, height = 6)
   
-  return(figure_print)
+  
+    figure_bar <- figure_base + 
+    ggplot2::geom_bar(
+      position="stack",
+    stat="identity",
+      data = dat0, 
+      # show.legend = FALSE, 
+      mapping = aes(#x = publication_year, 
+                    y = val, 
+                    fill = val, 
+                    color = val),
+      alpha = .5,
+      size = .75) + 
+    ggplot2::scale_color_viridis_d(name = "", option = "mako", begin = .1, end = .7) + 
+    ggplot2::scale_fill_viridis_d(name = "", option = "mako", begin = .1, end = .7) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0) 
+  
+  ggsave(filename = here::here("output", paste0("bar-", column0,".png")),
+         plot = figure_bar, width = 6, height = 6)
+  
+  dat_names <- dat_names  %>% 
+    dplyr::select(-val1) %>% 
+    flextable::flextable() %>%
+    flextable::theme_zebra()
+  
+  return(list("line_plot" = figure_line, 
+              "bar_plot" = figure_bar, 
+              "freq" = dat_names))
 }
 ```
 
@@ -315,15 +344,29 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
 
 ```{r}
 #| label: research-field-line
-#| tbl-cap: "Plot of frequencyuency and year, by research field. "
+#| fig-cap: "Line plot of frequencyuency and year, by research field. "
 
 column0 = "research_field"
-figure_print <- auto_plot_descr(dat1 = dat_descr, 
+aaa <- auto_plot_descr(dat1 = dat_descr, 
                           column0 = column0, 
                           other_cutoff = 0, 
                           title0 = "Plot of frequencyency and year, by research field")
 
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
+```
+
+```{r}
+#| label: research-field-bar
+#| fig-cap: "Bar plot of frequencyuency and year, by research field. "
+
+knitr::include_graphics(path = here::here("output", paste0("bar-", column0,".png")))
+```
+
+```{r}
+#| label: research-field-table
+#| tbl-cap: "Frequencyuency and year, by research field. "
+
+aaa$freq
 ```
 
 ```{r}
