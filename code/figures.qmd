@@ -61,7 +61,8 @@ classifiers <- readxl::read_xlsx(path = here::here("data/data.xlsx"),
 
 dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"), 
                          sheet = "Papers", 
-                         skip = 1) %>% 
+                         skip = 1)
+dat <- dat %>% 
   janitor::clean_names() %>% 
   dplyr::select(
     orig_order, 
@@ -78,7 +79,10 @@ dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"),
     dplyr::starts_with("gear_type"), 
     dplyr::starts_with("research_field"), 
     dplyr::starts_with("location"), 
-    dplyr::starts_with("survey"), 
+    dplyr::starts_with("survey"),
+    condensed_gear,
+    condensed_research_field,
+    condensed_organism,
     organism,
     include
   ) 
@@ -128,12 +132,32 @@ dat_descr <- dplyr::bind_rows(
     dplyr::filter(include == "YES") %>% 
     dplyr::select(orig_order, 
                   publication_year, 
+                  condensed_gear) %>% 
+    tidyr::pivot_longer(cols = condensed_gear, 
+                        names_to = "col",
+                        values_to = "val") %>% 
+    dplyr::mutate(var ="condensed_gear"), 
+  
+  dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
                   dplyr::starts_with("research_field")) %>% 
     tidyr::pivot_longer(cols = dplyr::starts_with("research_field"), 
                         names_pattern = "research_field(.*)", 
                         names_to = "col",
                         values_to = "val") %>% 
     dplyr::mutate(var ="research_field"), 
+  
+    dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  condensed_research_field) %>% 
+    tidyr::pivot_longer(cols = condensed_research_field, 
+                        names_to = "col",
+                        values_to = "val") %>% 
+    dplyr::mutate(var ="condensed_research_field"), 
   
   dat %>%
     dplyr::filter(include == "YES") %>% 
@@ -162,7 +186,17 @@ dat_descr <- dplyr::bind_rows(
     dplyr::select(orig_order, 
                   publication_year, 
                   val = organism) %>% 
-    dplyr::mutate(var ="organism")) %>% 
+    dplyr::mutate(var ="organism"),
+  
+    dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  condensed_organism) %>% 
+    tidyr::pivot_longer(cols = condensed_organism, 
+                        names_to = "col",
+                        values_to = "val") %>% 
+    dplyr::mutate(var ="condensed_organism")) %>% 
   
   dplyr::select(-dplyr::ends_with("col"))
 
@@ -257,13 +291,17 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
   # get totals for whole timeseries
   dat_names <- dat0 %>% 
     dplyr::left_join(dat0 %>% 
+                       dplyr::arrange(publication_year) %>% 
                        dplyr::group_by(val) %>% 
                        dplyr::summarise(freq = n()) %>% 
+                       dplyr::mutate(cum_freq = cumsum(freq)) %>% 
                        dplyr::ungroup() %>%
                        dplyr::arrange(desc(freq)) %>%
                        dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) ) %>% 
+    dplyr::arrange(publication_year) %>% 
     dplyr::group_by(val) %>% 
     dplyr::summarise(freq = n()) %>% 
+    dplyr::mutate(cum_freq = cumsum(freq)) %>% 
     dplyr::ungroup() %>%
     dplyr::arrange(desc(freq)) %>% 
     dplyr::filter(!is.na(val)) %>% 
@@ -273,21 +311,26 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
                            levels = unique(dat_names$val1), 
                              labels = unique(dat_names$val1), 
                              ordered = TRUE)
-  
   # prepare frequency data
-  dat00 <- dat0 %>% 
-    dplyr::left_join(dat0 %>% 
-                       dplyr::group_by(val) %>% 
-                       dplyr::summarise(freq = n()) %>% 
+  dat00 <- dat0 %>%
+    dplyr::left_join(dat0 %>%
+                       dplyr::arrange(publication_year) %>%
+                       dplyr::group_by(val) %>%
+                       dplyr::summarise(freq = n()) %>%
+                       dplyr::mutate(cum_freq = cumsum(freq)) %>%
                        dplyr::ungroup() %>%
                        dplyr::arrange(desc(freq)) %>%
-                       dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) ) %>% 
-    dplyr::group_by(publication_year, val) %>% 
-    dplyr::summarise(freq = n()) %>% 
+                       dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) ) %>%
+    
+    
+    # ADD CUMULATIVE FREQUENCIES HERE?
+    
+    dplyr::group_by(publication_year, val) %>%
+    dplyr::summarise(freq = n()) %>%
     dplyr::ungroup() %>%
-    dplyr::arrange(desc(freq))  %>% 
-    dplyr::filter(!is.na(val)) %>% 
-    dplyr::left_join(dat_names %>% 
+    dplyr::arrange(desc(freq))  %>%
+    dplyr::filter(!is.na(val)) %>%
+    dplyr::left_join(dat_names %>%
     dplyr::select(-freq))
   
   
@@ -309,15 +352,13 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
   
   
     figure_bar <- figure_base + 
-    ggplot2::geom_bar(
+    ggplot2::geom_bar(data = dat00, 
+      mapping = aes(x = publication_year,
+                    y = freq,
+                    fill=val1,
+                    color = val1),
       position="stack",
     stat="identity",
-      data = dat0, 
-      # show.legend = FALSE, 
-      mapping = aes(#x = publication_year, 
-                    y = val, 
-                    fill = val, 
-                    color = val),
       alpha = .5,
       size = .75) + 
     ggplot2::scale_color_viridis_d(name = "", option = "mako", begin = .1, end = .7) + 
@@ -326,8 +367,46 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
     ylab("Frequency") +
     ggtitle(title0) 
   
-  ggsave(filename = here::here("output", paste0("bar-", column0,".png")),
+    ggsave(filename = here::here("output", paste0("bar-", column0,".png")),
          plot = figure_bar, width = 6, height = 6)
+    
+    figure_area <- figure_base + 
+    ggplot2::geom_area(data = dat00, 
+      mapping = aes(x = publication_year,
+                    y = freq,
+                    fill=val1)
+      # ,alpha = .5,
+      # size = .75) 
+    )+ 
+    ggplot2::scale_color_viridis_d(name = "", option = "mako", begin = .1, end = .7,
+                                   direction = -1) + 
+    ggplot2::scale_fill_viridis_d(name = "", option = "mako", begin = .1, end = .7,
+                                   direction = -1) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0) 
+  
+  ggsave(filename = here::here("output", paste0("area-", column0,".png")),
+         plot = figure_area, width = 6, height = 6)
+  
+  figure_cumline <- figure_base + 
+    ggplot2::geom_line(data = dat00, 
+      mapping = aes(x = publication_year,
+                    y = cum_freq,
+                    fill=val1)
+      # ,alpha = .5,
+      # size = .75) 
+    )+ 
+    ggplot2::scale_color_viridis_d(name = "", option = "mako", begin = .1, end = .7,
+                                   direction = -1) + 
+    ggplot2::scale_fill_viridis_d(name = "", option = "mako", begin = .1, end = .7,
+                                   direction = -1) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0) 
+  
+  ggsave(filename = here::here("output", paste0("cumline-", column0,".png")),
+         plot = figure_cumline, width = 6, height = 6)
   
   dat_names <- dat_names  %>% 
     dplyr::select(-val1) %>% 
@@ -335,7 +414,9 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
     flextable::theme_zebra()
   
   return(list("line_plot" = figure_line, 
-              "bar_plot" = figure_bar, 
+              "bar_plot" = figure_bar,
+              "area_plot" = figure_area,
+              "cumline_plot" = figure_cumline,
               "freq" = dat_names))
 }
 ```
@@ -344,13 +425,13 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
 
 ```{r}
 #| label: research-field-line
-#| fig-cap: "Line plot of frequencyuency and year, by research field. "
+#| fig-cap: "Line plot of frequency and year, by research field. "
 
 column0 = "research_field"
 aaa <- auto_plot_descr(dat1 = dat_descr, 
                           column0 = column0, 
                           other_cutoff = 0, 
-                          title0 = "Plot of frequencyency and year, by research field")
+                          title0 = "Plot of frequency and year, by research field")
 
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
@@ -363,15 +444,56 @@ knitr::include_graphics(path = here::here("output", paste0("bar-", column0,".png
 ```
 
 ```{r}
+#| label: research-field-area
+#| fig-cap: "Area plot of frequencyuency and year, by research field. "
+
+knitr::include_graphics(path = here::here("output", paste0("area-", column0,".png")))
+```
+
+```{r}
+#| label: cond-research-field-line
+#| fig-cap: "Line plot of frequencyuency and year, by research field. [Condensed Categories] "
+
+column0 = "condensed_research_field"
+aaa <- auto_plot_descr(dat1 = dat_descr, 
+                          column0 = column0, 
+                          other_cutoff = 0, 
+                          title0 = "Plot of frequencyency and year, by research field")
+
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
+```
+
+```{r, eval = FALSE}
+#| label: research-field-cumline
+#| fig-cap: "Line plot of cumulative frequency and year, by research field. "
+
+knitr::include_graphics(path = here::here("output", paste0("cumline-", column0,".png")))
+```
+
+```{r}
+#| label: cond-research-field-bar
+#| fig-cap: "Bar plot of frequency and year, by research field. [Condensed Categories] "
+
+knitr::include_graphics(path = here::here("output", paste0("bar-", column0,".png")))
+```
+
+```{r}
+#| label: cond-research-field-area
+#| fig-cap: "Area plot of frequency and year, by research field. [Condensed Categories] "
+
+knitr::include_graphics(path = here::here("output", paste0("area-", column0,".png")))
+```
+
+```{r}
 #| label: research-field-table
-#| tbl-cap: "Frequencyuency and year, by research field. "
+#| tbl-cap: "Frequency and year, by research field. "
 
 aaa$freq
 ```
 
 ```{r}
 #| label: gear_type-line
-#| tbl-cap: "Plot of frequencyuency and year, by gear type. "
+#| tbl-cap: "Line Plot of frequency and year, by gear type. "
 
 column0 = "gear_type"
 figure_print <- auto_plot_descr(dat1 = dat_descr, 
@@ -383,8 +505,61 @@ knitr::include_graphics(path = here::here("output", paste0("line-", column0,".pn
 ```
 
 ```{r}
+#| label: gear_type-bar
+#| tbl-cap: "Bar Plot of frequency and year, by gear type. "
+
+
+knitr::include_graphics(path = here::here("output", paste0("bar-", column0,".png")))
+```
+
+```{r}
+#| label: gear_type-area
+#| tbl-cap: "Area Plot of frequency and year, by gear type. "
+
+
+knitr::include_graphics(path = here::here("output", paste0("area-", column0,".png")))
+```
+
+```{r}
+#| label: cond-gear_type-line
+#| tbl-cap: "Line Plot of frequency and year, by gear type. [Condensed Categories]"
+
+column0 = "condensed_gear"
+figure_print <- auto_plot_descr(dat1 = dat_descr, 
+                          column0 = column0, 
+                          other_cutoff = 0, 
+                          title0 = "Plot of frequencyency and year, by gear type [Condensed Categories]")
+
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
+```
+
+```{r}
+#| label: cond-gear_type-bar
+#| tbl-cap: "Bar Plot of frequency and year, by gear type. [Condensed Categories]"
+
+
+knitr::include_graphics(path = here::here("output", paste0("bar-", column0,".png")))
+```
+
+```{r}
+#| label: cond-gear_type-area
+#| tbl-cap: "Area Plot of frequency and year, by gear type. [Condensed Categories]"
+
+
+knitr::include_graphics(path = here::here("output", paste0("area-", column0,".png")))
+```
+
+```{r, eval=FALSE}
+#| label: cond-gear_type-cumfreq
+#| tbl-cap: "Line Plot of cumulative frequency and year, by gear type. [Condensed Categories]"
+
+
+knitr::include_graphics(path = here::here("output", paste0("cumline-", column0,".png")))
+```
+
+```{r}
 #| label: location-line
-#| tbl-cap: "Plot of frequencyuency and year, by location. "
+#| tbl-cap: "Line Plot of frequency and year, by location. "
 
 column0 = "location"
 figure_print <- auto_plot_descr(dat1 = dat_descr, 
@@ -393,6 +568,22 @@ figure_print <- auto_plot_descr(dat1 = dat_descr,
                           title0 = "Plot of frequencyency and year, by location")
 
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
+```
+
+```{r}
+#| label: location-bar
+#| tbl-cap: "Bar Plot of frequency and year, by location. "
+
+
+knitr::include_graphics(path = here::here("output", paste0("bar-", column0,".png")))
+```
+
+```{r}
+#| label: location-area
+#| tbl-cap: "Bar Plot of frequency and year, by location. "
+
+
+knitr::include_graphics(path = here::here("output", paste0("area-", column0,".png")))
 ```
 
 ```{r}
@@ -408,6 +599,21 @@ figure_print <- auto_plot_descr(dat1 = dat_descr,
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
+```{r}
+#| label: survey-bar
+#| tbl-cap: "Bar Plot of frequencyuency and year, by survey "
+
+
+knitr::include_graphics(path = here::here("output", paste0("bar-", column0,".png")))
+```
+
+```{r}
+#| label: survey-area
+#| tbl-cap: "Bar Plot of frequencyuency and year, by survey "
+
+
+knitr::include_graphics(path = here::here("output", paste0("area-", column0,".png")))
+```
 
 ```{r}
 #| label: organism-line
@@ -427,6 +633,60 @@ figure_print <- auto_plot(dat1 = dat,
                           other_cutoff = 20, 
                           title0 = "Plot of frequencyency and year, by organism")
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
+```
+
+
+```{r}
+#| label: organism-line
+#| tbl-cap: "Line Plot of frequencyuency and year, by organism "
+
+column0 = "organism"
+figure_print <- auto_plot(dat1 = dat, 
+                          column0 = column0, 
+                          other_cutoff = 20, 
+                          title0 = "Plot of frequencyency and year, by organism")
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
+```
+
+```{r}
+#| label: organism-bar
+#| tbl-cap: "Bar Plot of frequencyuency and year, by organism "
+
+knitr::include_graphics(path = here::here("output", paste0("bar-", column0,".png")))
+```
+
+```{r}
+#| label: organism-area
+#| tbl-cap: "Area Plot of frequencyuency and year, by organism "
+
+knitr::include_graphics(path = here::here("output", paste0("area-", column0,".png")))
+```
+
+
+```{r}
+#| label: cond-organism-line
+#| tbl-cap: "Line Plot of frequencyuency and year, by organism [Condensed Categories] "
+
+column0 = "condensed_organism"
+figure_print <- auto_plot(dat1 = dat, 
+                          column0 = column0, 
+                          other_cutoff = 20, 
+                          title0 = "Plot of frequencyency and year, by organism [Condensed Categories]")
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
+```
+
+```{r}
+#| label: cond-organism-bar
+#| tbl-cap: "Bar Plot of frequency and year, by organism [Condensed Categories]"
+
+knitr::include_graphics(path = here::here("output", paste0("bar-", column0,".png")))
+```
+
+```{r}
+#| label: cond-organism-area
+#| tbl-cap: "Area Plot of frequencyuency and year, by organism [Condensed Categories]"
+
+knitr::include_graphics(path = here::here("output", paste0("area-", column0,".png")))
 ```
 
 Plot of frequency and year, by journal
