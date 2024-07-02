@@ -1,18 +1,18 @@
 ---
-  title: "Publication Plots"
+title: "Publication Plots"
 editor: source
 author:
   - name: Emily Markowitz
-email: Emily.Markowitz@noaa.gov 
-note: https://github.com/afsc-gap-products
-affiliations:
-  - name: NOAA Fisheres Alaska Fisheries Science Center
-department: Groundfish Assessment Program, Bering Sea Survey Team
-- name: Catherine Foley
-email: Catherine.Foley@noaa.gov 
-note: https://github.com/noaa-nefsc
-affiliations:
-  - name: NOAA Fisheres Northeast Fisheries Science Center
+    email: Emily.Markowitz@noaa.gov 
+    note: https://github.com/afsc-gap-products
+    affiliations:
+      - name: NOAA Fisheres Alaska Fisheries Science Center
+    department: Groundfish Assessment Program, Bering Sea Survey Team
+  - name: Catherine Foley
+    email: Catherine.Foley@noaa.gov 
+    note: https://github.com/noaa-nefsc
+    affiliations:
+      - name: NOAA Fisheres Northeast Fisheries Science Center
 department: Groundfish Assessment Program
 date: "`r paste0(format(Sys.time(), '%B %d, %Y'))`"
 format: html
@@ -22,10 +22,10 @@ message: FALSE
 warning: FALSE
 error: FALSE
 comment: FALSE
+echo: FALSE
 ---
-  
-  
-  ```{r load-libraries, include = FALSE}
+
+```{r load-libraries, include = FALSE}
 PKG <- c("devtools", "googledrive", "ggplot2", 
          "magrittr", "here", "dplyr", "sf", "readxl", 
          "janitor")
@@ -161,32 +161,33 @@ dat_descr <- dplyr::bind_rows(
     dplyr::filter(include == "YES") %>% 
     dplyr::select(orig_order, 
                   publication_year, 
-                  organism)) %>% 
-  dplyr::select(-dplyr::ends_with("_col"))
+                  val = organism) %>% 
+    dplyr::mutate(var ="organism")) %>% 
+  
+  dplyr::select(-dplyr::ends_with("col"))
 
 ```
 
+We conducted a literature review using the web of science citation system (search query: <https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1>). To be included in this analysis, each paper had to contain a long-term fisheries survey or pilot study of a new study Our search returned `r format(x = nrow(dat), big.mark = ",")` entries, of which contained `r format(x = nrow(dat[dat$include == "DUPLICATE" & !is.na(dat$include),]), big.mark = ",")` duplicate results and `r format(x = nrow(dat[dat$include == "NO" & !is.na(dat$include),]), big.mark = ",")` irrelevant results, leaving `r format(x = nrow(dat[dat$include == "YES" & !is.na(dat$include),]), big.mark = ",")` relevant articles to categorize. The following categories were used in this analysis: 
 
-We conducted a literature review using the web of science citation system (search query: <https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1>). To be included in this analysis, each paper had to contain a long-term fisheries survey or pilot study of a new study Our search returned `r format(x = nrow(dat), big.mark = ",")` entries, of which contained `r format(x = dat[dat$include == "DUPLICATE" & !is.na(dat$include),], big.mark = ",")` duplicate results and `r format(x = dat[dat$include == "NO" & !is.na(dat$include),], big.mark = ",")` irrelevant results, leaving `r format(x = dat[dat$include == "YES" & !is.na(dat$include),], big.mark = ",")` relevant articles to categorize. The following categories were used in this analysis: 
-  
-  **Gear Type**: 
-  `r paste0(unique(dat_descr$gear_type), collapse = ", ")`
+**Gear Type**: 
+`r paste0(unique(dat_descr$val[dat_descr$var == "gear_type"]), collapse = ", ")`
 
 **Research topic**: 
-  `r paste0(unique(dat_descr$research_field), collapse = ", ")`
+`r paste0(unique(dat_descr$val[dat_descr$var == "research_field"]), collapse = ", ")`
 
 **Location**: 
-  `r paste0(unique(dat_descr$location), collapse = ", ")`
+`r paste0(unique(dat_descr$val[dat_descr$var == "location"]), collapse = ", ")`
 
 **Survey**: 
-  `r paste0(unique(dat_descr$survey), collapse = ", ")`
+`r paste0(unique(dat_descr$val[dat_descr$var == "survey"]), collapse = ", ")`
 
 **Organism focus**: 
-  `r paste0(unique(dat_descr$organism), collapse = ", ")`
+`r paste0(unique(dat_descr$val[dat_descr$var == "organism"]), collapse = ", ")`
 
 <!-- figure_print base (just for making following plots consistent) -->
   
-  ```{r figure_printure-base, include = FALSE}
+```{r figure_printure-base, include = FALSE}
 figure_base <- ggplot2::ggplot()  +
   theme_bw()  +
   ggplot2::theme(
@@ -314,66 +315,66 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
 
 ```{r}
 #| label: research-field-line
-#| tbl-cap: "Plot of frequency and year, by research field. "
+#| tbl-cap: "Plot of frequencyuency and year, by research field. "
 
 column0 = "research_field"
 figure_print <- auto_plot_descr(dat1 = dat_descr, 
                           column0 = column0, 
                           other_cutoff = 0, 
-                          title0 = "Plot of freqency and year, by research field")
+                          title0 = "Plot of frequencyency and year, by research field")
 
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
 ```{r}
 #| label: gear_type-line
-#| tbl-cap: "Plot of frequency and year, by gear type. "
+#| tbl-cap: "Plot of frequencyuency and year, by gear type. "
 
 column0 = "gear_type"
 figure_print <- auto_plot_descr(dat1 = dat_descr, 
                           column0 = column0, 
                           other_cutoff = 0, 
-                          title0 = "Plot of freqency and year, by gear type")
+                          title0 = "Plot of frequencyency and year, by gear type")
 
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
 ```{r}
 #| label: location-line
-#| tbl-cap: "Plot of frequency and year, by location. "
+#| tbl-cap: "Plot of frequencyuency and year, by location. "
 
 column0 = "gear_type"
 figure_print <- auto_plot_descr(dat1 = dat_descr, 
                           column0 = column0, 
                           other_cutoff = 0, 
-                          title0 = "Plot of freqency and year, by location")
+                          title0 = "Plot of frequencyency and year, by location")
 
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
 ```{r}
 #| label: survey-line
-#| tbl-cap: "Plot of frequency and year, by survey "
+#| tbl-cap: "Plot of frequencyuency and year, by survey "
 
 column0 = "survey"
 figure_print <- auto_plot_descr(dat1 = dat_descr, 
                           column0 = column0, 
                           other_cutoff = 0, 
-                          title0 = "Plot of freqency and year, by survey")
+                          title0 = "Plot of frequencyency and year, by survey")
 
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
 
 ```{r}
-#| label: location-line
-#| tbl-cap: "Plot of frequency and year, by organism "
+#| label: organism-line
+#| tbl-cap: "Plot of frequencyuency and year, by organism "
 
 # column0 = "organism"
 # figure_print <- auto_plot_descr(dat1 = dat_descr, 
 #                           column0 = column0, 
 #                           other_cutoff = 0, 
-#                           title0 = "Plot of freqency and year, by organism")
+#                           title0 = "Plot of frequencyency and year, by organism")
 # 
 # knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 
@@ -381,29 +382,29 @@ column0 = "organism"
 figure_print <- auto_plot(dat1 = dat, 
                           column0 = column0, 
                           other_cutoff = 20, 
-                          title0 = "Plot of freqency and year, by organism")
+                          title0 = "Plot of frequencyency and year, by organism")
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
-Plot of freq and year, by journal
+Plot of frequency and year, by journal
 
 ```{r}
-#| label: location-line
-#| tbl-cap: "Plot of frequency and year, by organism "
+#| label: source_title-line
+#| tbl-cap: "Plot of frequencyuency and year, by organism "
 
 column0 = "source_title"
 figure_print <- auto_plot(dat1 = dat, 
                           column0 = column0, 
                           other_cutoff = 20, 
-                          title0 = "Plot of freqency and year, by journal")
+                          title0 = "Plot of frequencyency and year, by journal")
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
-Plot of freq and year, by affiliation
+Plot of frequency and year, by affiliation
 
 ```{r}
 #| label: affiliation-line
-#| tbl-cap: "Plot of frequency and year, by affiliation "
+#| tbl-cap: "Plot of frequencyuency and year, by affiliation "
 
 dat_aff <- dat %>% 
   dplyr::select(affiliations, publication_year) %>%
@@ -476,33 +477,33 @@ column0 = "aff_val"
 figure_print <- auto_plot(dat1 = dat_aff, 
                           column0 = column0, 
                           other_cutoff = 20, 
-                          title0 = "Plot of freq and year, by affiliation")
+                          title0 = "Plot of frequency and year, by affiliation")
 
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
-Plot of freq and year, by government, academic, and industry affiliated coauthor
+Plot of frequency and year, by government, academic, and industry affiliated coauthor
 
 ```{r}
 #| label: affiliation-line1
-#| tbl-cap: "Plot of frequency and year, by affiliation "
+#| tbl-cap: "Plot of frequencyuency and year, by affiliation "
 
 column0 = "aff_val1"
 figure_print <- auto_plot(dat1 = dat_aff, 
                           column0 = column0, 
                           other_cutoff = 20, 
-                          title0 = "Plot of freq and year, by affiliation")
+                          title0 = "Plot of frequency and year, by affiliation")
 
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
-Plot of freq and year, by key words
+Plot of frequency and year, by key words
 
 > need to find a way to group similar topics
 
 ```{r}
 #| label: keyword-line
-#| tbl-cap: "Plot of frequency and year, by keyword "
+#| tbl-cap: "Plot of frequencyuency and year, by keyword "
 
 dat_key <- dat %>% 
   dplyr::select(author_keywords, publication_year) %>%
@@ -532,7 +533,7 @@ column0 = "key_val"
 figure_print <- auto_plot(dat1 = dat_key, 
                           column0 = column0, 
                           other_cutoff = 10, 
-                          title0 = "Plot of freq and year, by key word")
+                          title0 = "Plot of frequency and year, by key word")
 
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
@@ -572,8 +573,11 @@ Size dot map of all locations
 
 ```{r}
 #| label: location-map
-#| tbl-cap: "Map of research locations. "
+#| tbl-cap: "Map of research locations where size is representitve of the number of publications about that area. "
+
 column0 <- "location"
+
+
 figure_print <- figure_base +
   ggplot2::geom_sf(data = world_coordinates, 
                    mapping = aes(fill = ID), 

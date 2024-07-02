@@ -8,7 +8,7 @@
 
 <meta name="author" content="Emily Markowitz">
 <meta name="author" content="Catherine Foley">
-<meta name="dcterms.date" content="2024-06-24">
+<meta name="dcterms.date" content="2024-07-02">
 
 <title>Publication Plots</title>
 <style>
@@ -22,40 +22,6 @@ ul.task-list li input[type="checkbox"] {
   width: 0.8em;
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -115,7 +81,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">June 24, 2024</p>
+      <p class="date">July 2, 2024</p>
     </div>
   </div>
   
@@ -125,181 +91,71 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<p>Search query: https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1</p>
-<p>figure_printure base (just for making following plots consistent)</p>
-<p>Plot of freq and year, by research field</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>column0 <span class="ot">=</span> <span class="st">"research_field"</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>figure_print <span class="ot">&lt;-</span> <span class="fu">auto_plot</span>(<span class="at">dat1 =</span> dat, </span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">column0 =</span> column0, </span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">other_cutoff =</span> <span class="dv">20</span>, </span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">title0 =</span> <span class="st">"Plot of freqency and year, by research field"</span>)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggsave</span>(<span class="at">filename =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"output"</span>, <span class="fu">paste0</span>(<span class="st">"figure_print-"</span>,column0,<span class="st">".png"</span>)),</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">plot =</span> figure_print, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  figure_print</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>We conducted a literature review using the web of science citation system (search query: <a href="https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1" class="uri">https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1</a>). To be included in this analysis, each paper had to contain a long-term fisheries survey or pilot study of a new study Our search returned 1,803 entries, of which contained 2 duplicate results and 288 irrelevant results, leaving 95 relevant articles to categorize. The following categories were used in this analysis:</p>
+<p><strong>Gear Type</strong>:</p>
+<p><strong>Research topic</strong>:</p>
+<p><strong>Location</strong>:</p>
+<p><strong>Survey</strong>:</p>
+<p><strong>Organism focus</strong>: NA, Ecosystem, Fish, Shark, Reef fish, Simulation, Crab, Sea Turtles, NEFSC BTS, Lobster, Scallops, ichthyoplankton, Clams, Varied</p>
+<!-- figure_print base (just for making following plots consistent) -->
+<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by research field. ">
 <div class="cell-output-display">
-<p><img src="figures_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid" width="672"></p>
+<p><img src="../output/line-research_field.png" class="img-fluid" width="900"></p>
 </div>
 </div>
-<p>Plot of freq and year, by gear type</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>column0 <span class="ot">=</span> <span class="st">"gear_type"</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>figure_print <span class="ot">&lt;-</span> <span class="fu">auto_plot</span>(<span class="at">dat1 =</span> dat, </span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">column0 =</span> column0, </span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">other_cutoff =</span> <span class="dv">20</span>, </span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">title0 =</span> <span class="st">"Plot of freqency and year, by location"</span>)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggsave</span>(<span class="at">filename =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"output"</span>, <span class="fu">paste0</span>(<span class="st">"figure_print-"</span>,column0,<span class="st">".png"</span>)),</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">plot =</span> figure_print, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  figure_print</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by gear type. ">
 <div class="cell-output-display">
-<p><img src="figures_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+<p><img src="../output/line-gear_type.png" class="img-fluid" width="900"></p>
 </div>
 </div>
-<p>Plot of freq and year, by region</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>column0 <span class="ot">=</span> <span class="st">"location"</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>figure_print <span class="ot">&lt;-</span> <span class="fu">auto_plot</span>(<span class="at">dat1 =</span> dat, </span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">column0 =</span> column0, </span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">other_cutoff =</span> <span class="dv">20</span>, </span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">title0 =</span> <span class="st">"Plot of freqency and year, by location"</span>)</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggsave</span>(<span class="at">filename =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"output"</span>, <span class="fu">paste0</span>(<span class="st">"figure_print-"</span>,column0,<span class="st">".png"</span>)),</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">plot =</span> figure_print, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  figure_print</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by location. ">
 <div class="cell-output-display">
-<p><img src="figures_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+<p><img src="../output/line-gear_type.png" class="img-fluid" width="900"></p>
 </div>
 </div>
-<p>Plot of freq and year, by journal</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># which publications have less than X (10?) hits over the whole timeseries?</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>column0 <span class="ot">=</span> <span class="st">"source_title"</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>figure_print <span class="ot">&lt;-</span> <span class="fu">auto_plot</span>(<span class="at">dat1 =</span> dat, </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                 <span class="at">column0 =</span> column0, </span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">other_cutoff =</span> <span class="dv">20</span>, </span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">title0 =</span> <span class="st">"Plot of freqency and year, by journal"</span>)</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggsave</span>(<span class="at">filename =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"output"</span>, <span class="fu">paste0</span>(<span class="st">"figure_print-"</span>,column0,<span class="st">".png"</span>)),</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">plot =</span> figure_print, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  figure_print</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by survey ">
 <div class="cell-output-display">
-<p><img src="figures_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+<p><img src="../output/line-survey.png" class="img-fluid" width="900"></p>
 </div>
 </div>
-<p>Plot of freq and year, by affiliation</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dat_aff <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(affiliations, publication_year) <span class="sc">%&gt;%</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">separate</span>(<span class="at">col =</span> <span class="st">"affiliations"</span>, <span class="at">sep =</span> <span class="st">"; "</span>, <span class="at">remove =</span> <span class="cn">FALSE</span>, <span class="at">into =</span> <span class="fu">paste0</span>(<span class="st">"aff_"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>affiliations) <span class="sc">%&gt;%</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">paste0</span>(<span class="st">"aff_"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>), <span class="at">names_to =</span> <span class="st">"aff_var"</span>, <span class="at">values_to =</span> <span class="st">"aff_val"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>aff_var) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(aff_val))</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># dplyr::group_by(publication_year, aff_val) %&gt;% </span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># dplyr::summarise(freq = n()) %&gt;% </span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># dplyr::filter(!is.na(freq))</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>column0 <span class="ot">=</span> <span class="st">"aff_val"</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>figure_print <span class="ot">&lt;-</span> <span class="fu">auto_plot</span>(<span class="at">dat1 =</span> dat_aff, </span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>                 <span class="at">column0 =</span> column0, </span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>                 <span class="at">other_cutoff =</span> <span class="dv">20</span>, </span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>                 <span class="at">title0 =</span> <span class="st">"Plot of freq and year, by affiliation"</span>)</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggsave</span>(<span class="at">filename =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"output"</span>, <span class="fu">paste0</span>(<span class="st">"figure_print-"</span>,column0,<span class="st">".png"</span>)),</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>         <span class="at">plot =</span> figure_print, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  figure_print</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by organism ">
 <div class="cell-output-display">
-<p><img src="figures_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+<p><img src="../output/line-organism.png" class="img-fluid" width="900"></p>
 </div>
 </div>
-<p>Plot of freq and year, by government, academic, and industry affiliated coauthor</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dat_aff <span class="ot">&lt;-</span> dat_aff <span class="sc">%&gt;%</span> </span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">aff_val1 =</span> dplyr<span class="sc">::</span><span class="fu">case_when</span>(</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">grepl</span>(<span class="at">x =</span> aff_val, <span class="at">pattern =</span> <span class="st">"NOAA"</span>) <span class="sc">~</span> <span class="st">"NOAA"</span>,</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">grepl</span>(<span class="at">x =</span> aff_val, <span class="at">pattern =</span> <span class="st">"National Oceanic and Atmospheric Administration"</span>) <span class="sc">~</span> <span class="st">"NOAA"</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  ))</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>column0 <span class="ot">=</span> <span class="st">"aff_val1"</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>figure_print <span class="ot">&lt;-</span> <span class="fu">auto_plot</span>(<span class="at">dat1 =</span> dat_aff, </span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                 <span class="at">column0 =</span> column0, </span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                 <span class="at">other_cutoff =</span> <span class="dv">20</span>, </span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                 <span class="at">title0 =</span> <span class="st">"Plot of freq and year, by affiliation"</span>)</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggsave</span>(<span class="at">filename =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"output"</span>, <span class="fu">paste0</span>(<span class="st">"figure_print-"</span>,column0,<span class="st">".png"</span>)),</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">plot =</span> figure_print, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  figure_print</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Plot of frequency and year, by journal</p>
+<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by organism ">
 <div class="cell-output-display">
-<p><img src="figures_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+<p><img src="../output/line-source_title.png" class="img-fluid" width="900"></p>
 </div>
 </div>
-<p>Plot of freq and year, by key words</p>
+<p>Plot of frequency and year, by affiliation</p>
+<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by affiliation ">
+<div class="cell-output-display">
+<p><img src="../output/line-aff_val.png" class="img-fluid" width="900"></p>
+</div>
+</div>
+<p>Plot of frequency and year, by government, academic, and industry affiliated coauthor</p>
+<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by affiliation ">
+<div class="cell-output-display">
+<p><img src="../output/line-aff_val1.png" class="img-fluid" width="900"></p>
+</div>
+</div>
+<p>Plot of frequency and year, by key words</p>
 <blockquote class="blockquote">
 <p>need to find a way to group similar topics</p>
 </blockquote>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dat_key <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(author_keywords, publication_year) <span class="sc">%&gt;%</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">separate</span>(<span class="at">col =</span> <span class="st">"author_keywords"</span>, <span class="at">sep =</span> <span class="st">"; "</span>, <span class="at">remove =</span> <span class="cn">FALSE</span>, <span class="at">into =</span> <span class="fu">paste0</span>(<span class="st">"key_"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>author_keywords) <span class="sc">%&gt;%</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">paste0</span>(<span class="st">"key_"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>), <span class="at">names_to =</span> <span class="st">"key_var"</span>, <span class="at">values_to =</span> <span class="st">"key_val"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>key_var) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(key_val)) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">key_val =</span> <span class="fu">tolower</span>(key_val), </span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>               <span class="at">key_val =</span> <span class="fu">gsub</span>(<span class="at">x =</span> key_val, <span class="at">pattern =</span> <span class="st">"-"</span>, <span class="at">replacement =</span> <span class="st">" "</span>) , </span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">key_val1 =</span> dplyr<span class="sc">::</span><span class="fu">case_when</span>(</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>                 key_val <span class="sc">==</span> <span class="st">"fisheries"</span> <span class="sc">~</span> <span class="st">"fisheries (and simlar)"</span>,</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>                 key_val <span class="sc">==</span> <span class="st">"fishery"</span> <span class="sc">~</span> <span class="st">"fisheries (and simlar)"</span>, </span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">grepl</span>(<span class="at">x =</span> key_val, <span class="at">pattern =</span> <span class="st">"coral"</span>) <span class="sc">~</span> <span class="st">"coral (and similar)"</span>, </span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">grepl</span>(<span class="at">x =</span> key_val, <span class="at">pattern =</span> <span class="st">"covid"</span>) <span class="sc">~</span> <span class="st">"covid (and similar)"</span></span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># key_val == "fisheries" ~ "fisheries (and simlar)"</span></span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>                 <span class="co"># key_val == "fisheries" ~ "fisheries (and simlar)"</span></span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>               )</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>               ) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">arrange</span>(key_val)</span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="co"># sort(unique(dat_key$key_val))</span></span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="co"># sort(unique(dat_key$key_val1))</span></span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>column0 <span class="ot">=</span> <span class="st">"key_val"</span></span>
-<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>figure_print <span class="ot">&lt;-</span> <span class="fu">auto_plot</span>(<span class="at">dat1 =</span> dat_key, </span>
-<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>                 <span class="at">column0 =</span> column0, </span>
-<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>                 <span class="at">other_cutoff =</span> <span class="dv">10</span>, </span>
-<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>                 <span class="at">title0 =</span> <span class="st">"Plot of freq and year, by key word"</span>)</span>
-<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggsave</span>(<span class="at">filename =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"output"</span>, <span class="fu">paste0</span>(<span class="st">"figure_print-"</span>,column0,<span class="st">".png"</span>)),</span>
-<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>         <span class="at">plot =</span> figure_print, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
-<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>  figure_print</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-tbl-cap="Plot of frequencyuency and year, by keyword ">
 <div class="cell-output-display">
-<p><img src="figures_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+<p><img src="../output/line-key_val.png" class="img-fluid" width="900"></p>
 </div>
 </div>
 <p>keyword cloud</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># https://cran.r-project.org/web/packages/ggwordcloud/vignettes/ggwordcloud.html</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("ggwordcloud")</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">"ggwordcloud"</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>dat_key <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(author_keywords, publication_year) <span class="sc">%&gt;%</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">separate</span>(<span class="at">col =</span> <span class="st">"author_keywords"</span>, <span class="at">sep =</span> <span class="st">"; "</span>, <span class="at">remove =</span> <span class="cn">FALSE</span>, <span class="at">into =</span> <span class="fu">paste0</span>(<span class="st">"key_"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>author_keywords) <span class="sc">%&gt;%</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">paste0</span>(<span class="st">"key_"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>), <span class="at">names_to =</span> <span class="st">"key_var"</span>, <span class="at">values_to =</span> <span class="st">"key_val"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>key_var) <span class="sc">%&gt;%</span> </span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(key_val))</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>figure_print <span class="ot">&lt;-</span> figure_base <span class="sc">+</span> </span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  ggwordcloud<span class="sc">::</span><span class="fu">geom_text_wordcloud</span>(<span class="at">data =</span> dat_key, </span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>                       <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">label =</span> key_val)) <span class="sc">+</span></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size_area</span>(<span class="at">max_size =</span> <span class="dv">30</span>) <span class="sc">+</span></span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>column0 <span class="ot">=</span> <span class="st">"key"</span></span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggsave</span>(<span class="at">filename =</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"output"</span>, <span class="fu">paste0</span>(<span class="st">"figure_print-"</span>,column0,<span class="st">".png"</span>)),</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>         <span class="at">plot =</span> figure_print, <span class="at">width =</span> <span class="dv">6</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  figure_print</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Size dot map of all locations</p>
+<div class="cell" data-tbl-cap="Map of research locations where size is representitve of the number of publications about that area. ">
+<div class="cell-output-display">
+<p><img src="../output/map-location.png" class="img-fluid" width="900"></p>
+</div>
 </div>
 
 </main>
