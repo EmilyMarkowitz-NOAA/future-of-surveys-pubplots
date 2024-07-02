@@ -289,7 +289,7 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
     dplyr::filter(!is.na(val))
   
   # get totals for whole timeseries
-  dat_names <- dat0 %>% 
+  dat_total <- dat0 %>% 
     dplyr::left_join(dat0 %>% 
                        dplyr::arrange(publication_year) %>% 
                        dplyr::group_by(val) %>% 
@@ -307,12 +307,12 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
     dplyr::filter(!is.na(val)) %>% 
     dplyr::mutate(val1 = paste0(val, " (", freq, ")"))
   
-  dat_names$val1 <- factor(x = dat_names$val1,
-                           levels = unique(dat_names$val1), 
-                             labels = unique(dat_names$val1), 
+  dat_total$val1 <- factor(x = dat_total$val1,
+                           levels = unique(dat_total$val1), 
+                             labels = unique(dat_total$val1), 
                              ordered = TRUE)
-  # prepare frequency data
-  dat00 <- dat0 %>%
+  # prepare frequency data for each year
+  dat_total_by_year <- dat0 %>%
     dplyr::left_join(dat0 %>%
                        dplyr::arrange(publication_year) %>%
                        dplyr::group_by(val) %>%
@@ -330,13 +330,13 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
     dplyr::ungroup() %>%
     dplyr::arrange(desc(freq))  %>%
     dplyr::filter(!is.na(val)) %>%
-    dplyr::left_join(dat_names %>%
+    dplyr::left_join(dat_total %>%
     dplyr::select(-freq))
   
   
   figure_line <- figure_base + 
     ggplot2::geom_line(
-      data = dat00, 
+      data = dat_total_by_year, 
       # show.legend = FALSE, 
       mapping = aes(x = publication_year, 
                     y = freq, 
@@ -352,7 +352,7 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
   
   
     figure_bar <- figure_base + 
-    ggplot2::geom_bar(data = dat00, 
+    ggplot2::geom_bar(data = dat_total_by_year, 
       mapping = aes(x = publication_year,
                     y = freq,
                     fill=val1,
@@ -371,7 +371,7 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
          plot = figure_bar, width = 6, height = 6)
     
     figure_area <- figure_base + 
-    ggplot2::geom_area(data = dat00, 
+    ggplot2::geom_area(data = dat_total_by_year, 
       mapping = aes(x = publication_year,
                     y = freq,
                     fill=val1)
@@ -390,7 +390,7 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
          plot = figure_area, width = 6, height = 6)
   
   figure_cumline <- figure_base + 
-    ggplot2::geom_line(data = dat00, 
+    ggplot2::geom_line(data = dat_total_by_year, 
       mapping = aes(x = publication_year,
                     y = cum_freq,
                     fill=val1)
@@ -408,7 +408,7 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
   ggsave(filename = here::here("output", paste0("cumline-", column0,".png")),
          plot = figure_cumline, width = 6, height = 6)
   
-  dat_names <- dat_names  %>% 
+  dat_total <- dat_total  %>% 
     dplyr::select(-val1) %>% 
     flextable::flextable() %>%
     flextable::theme_zebra()
@@ -417,7 +417,7 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
               "bar_plot" = figure_bar,
               "area_plot" = figure_area,
               "cumline_plot" = figure_cumline,
-              "freq" = dat_names))
+              "freq" = dat_total))
 }
 ```
 
