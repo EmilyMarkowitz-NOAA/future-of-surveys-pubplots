@@ -1,19 +1,19 @@
 ---
-title: "Publication Plots"
+  title: "Publication Plots"
 editor: source
 author:
-    - name: Emily Markowitz
-      email: Emily.Markowitz@noaa.gov 
-      note: https://github.com/afsc-gap-products
-      affiliations:
-        - name: NOAA Fisheres Alaska Fisheries Science Center
-          department: Groundfish Assessment Program, Bering Sea Survey Team
-    - name: Catherine Foley
-      email: Catherine.Foley@noaa.gov 
-      note: https://github.com/noaa-nefsc
-      affiliations:
-        - name: NOAA Fisheres Northeast Fisheries Science Center
-          department: Groundfish Assessment Program
+  - name: Emily Markowitz
+email: Emily.Markowitz@noaa.gov 
+note: https://github.com/afsc-gap-products
+affiliations:
+  - name: NOAA Fisheres Alaska Fisheries Science Center
+department: Groundfish Assessment Program, Bering Sea Survey Team
+- name: Catherine Foley
+email: Catherine.Foley@noaa.gov 
+note: https://github.com/noaa-nefsc
+affiliations:
+  - name: NOAA Fisheres Northeast Fisheries Science Center
+department: Groundfish Assessment Program
 date: "`r paste0(format(Sys.time(), '%B %d, %Y'))`"
 format: html
 toc-location: body
@@ -23,10 +23,9 @@ warning: FALSE
 error: FALSE
 comment: FALSE
 ---
-
-Search query: https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1 
-
-```{r load-libraries, include = FALSE}
+  
+  
+  ```{r load-libraries, include = FALSE}
 PKG <- c("devtools", "googledrive", "ggplot2", 
          "magrittr", "here", "dplyr", "sf", "readxl", 
          "janitor")
@@ -55,13 +54,139 @@ googledrive::drive_download(file = googledrive::as_id(googledrive_dl),  #"gap_su
                             overwrite = TRUE, 
                             path = here::here("data/data.xlsx"))
 
-dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"), sheet = "Papers") %>% 
+classifiers <- readxl::read_xlsx(path = here::here("data/data.xlsx"), 
+                                 sheet = "Classifiers", 
+                                 skip = 1) %>% 
   janitor::clean_names() 
+
+dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"), 
+                         sheet = "Papers", 
+                         skip = 1) %>% 
+  janitor::clean_names() %>% 
+  dplyr::select(
+    orig_order, 
+    authors, 
+    article_title, 
+    source_title, 
+    document_type, 
+    # keywords_plus, 
+    author_keywords, 
+    abstract, 
+    affiliations, 
+    publication_year, 
+    doi_link, 
+    dplyr::starts_with("gear_type"), 
+    dplyr::starts_with("research_field"), 
+    dplyr::starts_with("location"), 
+    dplyr::starts_with("survey"), 
+    organism,
+    include
+  ) 
+
+
+# dat_descr <- dat %>%
+#   dplyr::filter(include == "YES") %>% 
+#   dplyr::select(orig_order, 
+#                 publication_year, 
+#                 dplyr::starts_with("gear_type"),
+#                 dplyr::starts_with("research_field"),
+#                 dplyr::starts_with("location"),
+#                 dplyr::starts_with("survey"), 
+#                 organism) %>% 
+#   tidyr::pivot_longer(cols = dplyr::starts_with("gear_type"), 
+#                       names_pattern = "gear_type(.*)", 
+#                       names_to = "gear_type_col",
+#                       values_to = "gear_type") %>% 
+#   tidyr::pivot_longer(cols = dplyr::starts_with("research_field"), 
+#                       names_pattern = "research_field(.*)", 
+#                       names_to = "research_field_col",
+#                       values_to = "research_field") %>% 
+#   tidyr::pivot_longer(cols = dplyr::starts_with("location"), 
+#                       names_pattern = "location(.*)", 
+#                       names_to = "location_col",
+#                       values_to = "location") %>% 
+#   tidyr::pivot_longer(cols = dplyr::starts_with("survey"), 
+#                       names_pattern = "survey(.*)", 
+#                       names_to = "survey_col",
+#                       values_to = "survey") %>% 
+#   dplyr::select(-dplyr::ends_with("_col"))
+
+dat_descr <- dplyr::bind_rows(
+  
+  dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  dplyr::starts_with("gear_type")) %>% 
+    tidyr::pivot_longer(cols = dplyr::starts_with("gear_type"), 
+                        names_pattern = "gear_type(.*)", 
+                        names_to = "col",
+                        values_to = "val") %>% 
+    dplyr::mutate(var ="gear_type"), 
+  
+  dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  dplyr::starts_with("research_field")) %>% 
+    tidyr::pivot_longer(cols = dplyr::starts_with("research_field"), 
+                        names_pattern = "research_field(.*)", 
+                        names_to = "col",
+                        values_to = "val") %>% 
+    dplyr::mutate(var ="research_field"), 
+  
+  dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  dplyr::starts_with("location")) %>% 
+    tidyr::pivot_longer(cols = dplyr::starts_with("location"), 
+                        names_pattern = "location(.*)", 
+                        names_to = "col",
+                        values_to = "val") %>% 
+    dplyr::mutate(var ="location"), 
+  
+  dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  dplyr::starts_with("survey")) %>% 
+    tidyr::pivot_longer(cols = dplyr::starts_with("survey"), 
+                        names_pattern = "survey(.*)", 
+                        names_to = "col",
+                        values_to = "val") %>% 
+    dplyr::mutate(var ="survey"),  
+  
+  dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  organism)) %>% 
+  dplyr::select(-dplyr::ends_with("_col"))
+
 ```
 
-figure_printure base (just for making following plots consistent)
 
-```{r figure_printure-base, include = FALSE}
+We conducted a literature review using the web of science citation system (search query: <https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1>). To be included in this analysis, each paper had to contain a long-term fisheries survey or pilot study of a new study Our search returned `r format(x = nrow(dat), big.mark = ",")` entries, of which contained `r format(x = dat[dat$include == "DUPLICATE" & !is.na(dat$include),], big.mark = ",")` duplicate results and `r format(x = dat[dat$include == "NO" & !is.na(dat$include),], big.mark = ",")` irrelevant results, leaving `r format(x = dat[dat$include == "YES" & !is.na(dat$include),], big.mark = ",")` relevant articles to categorize. The following categories were used in this analysis: 
+  
+  **Gear Type**: 
+  `r paste0(unique(dat_descr$gear_type), collapse = ", ")`
+
+**Research topic**: 
+  `r paste0(unique(dat_descr$research_field), collapse = ", ")`
+
+**Location**: 
+  `r paste0(unique(dat_descr$location), collapse = ", ")`
+
+**Survey**: 
+  `r paste0(unique(dat_descr$survey), collapse = ", ")`
+
+**Organism focus**: 
+  `r paste0(unique(dat_descr$organism), collapse = ", ")`
+
+<!-- figure_print base (just for making following plots consistent) -->
+  
+  ```{r figure_printure-base, include = FALSE}
 figure_base <- ggplot2::ggplot()  +
   theme_bw()  +
   ggplot2::theme(
@@ -69,13 +194,17 @@ figure_base <- ggplot2::ggplot()  +
     plot.margin=unit(c(0,0,0,0), "cm") ,
     panel.background = element_rect(fill = "white"), #grey95
     legend.position="bottom",
+    legend.text = element_text(size = 5),
     legend.direction="horizontal",
     legend.justification="left",
     legend.background = element_blank(),
     legend.location = "right", 
+    legend.key.spacing = unit(0.0010, 'cm'),
     legend.box.background = element_blank())
-```
 
+world_coordinates <- maps::map("world", plot = FALSE, fill = TRUE) %>%
+  sf::st_as_sf() 
+```
 
 ```{r auto-plot-fnct, include = FALSE}
 auto_plot <- function(dat1, column0, other_cutoff = 20, title0 = "") {
@@ -108,111 +237,263 @@ auto_plot <- function(dat1, column0, other_cutoff = 20, title0 = "") {
     ylab("Frequency") +
     ggtitle(title0) 
   
+    ggsave(filename = here::here("output", paste0("line-", column0,".png")),
+         plot = figure_print, width = 6, height = 6)
+  
   return(figure_print)
 }
 ```
 
-Plot of freq and year, by research field
+```{r auto-plot-dsecr-fnct, include = FALSE}
+auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
+  
+  # make data wrangling easier
+  dat0 <- dat1  %>% 
+    dplyr::filter(var == column0) %>% 
+    dplyr::select(publication_year, val) %>% 
+    dplyr::filter(!is.na(val))
+  
+  # get totals for whole timeseries
+  dat_names <- dat0 %>% 
+    dplyr::left_join(dat0 %>% 
+                       dplyr::group_by(val) %>% 
+                       dplyr::summarise(freq = n()) %>% 
+                       dplyr::ungroup() %>%
+                       dplyr::arrange(desc(freq)) %>%
+                       dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) ) %>% 
+    dplyr::group_by(val) %>% 
+    dplyr::summarise(freq = n()) %>% 
+    dplyr::ungroup() %>%
+    dplyr::arrange(desc(freq)) %>% 
+    dplyr::filter(!is.na(val)) %>% 
+    dplyr::mutate(val1 = paste0(val, " (", freq, ")")) %>% 
+    dplyr::select(-freq)
+  
+  dat_names$val1 <- factor(x = dat_names$val1,
+                           levels = unique(dat_names$val1), 
+                             labels = unique(dat_names$val1), 
+                             ordered = TRUE)
+  
+  # prepare frequency data
+  dat0 <- dat0 %>% 
+    dplyr::left_join(dat0 %>% 
+                       dplyr::group_by(val) %>% 
+                       dplyr::summarise(freq = n()) %>% 
+                       dplyr::ungroup() %>%
+                       dplyr::arrange(desc(freq)) %>%
+                       dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) ) %>% 
+    dplyr::group_by(publication_year, val) %>% 
+    dplyr::summarise(freq = n()) %>% 
+    dplyr::ungroup() %>%
+    dplyr::arrange(desc(freq))  %>% 
+    dplyr::filter(!is.na(val)) %>% 
+    dplyr::left_join(dat_names)
+  
+  
+  figure_print <- figure_base + 
+    ggplot2::geom_line(
+      data = dat0, 
+      # show.legend = FALSE, 
+      mapping = aes(x = publication_year, 
+                    y = freq, 
+                    color = val1), 
+      size = .75) + 
+    ggplot2::scale_color_viridis_d(name = "", option = "mako", begin = .1, end = .7) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0) 
+  
+  ggsave(filename = here::here("output", paste0("line-", column0,".png")),
+         plot = figure_print, width = 6, height = 6)
+  
+  return(figure_print)
+}
+```
+
+
 
 ```{r}
+#| label: research-field-line
+#| tbl-cap: "Plot of frequency and year, by research field. "
+
 column0 = "research_field"
-figure_print <- auto_plot(dat1 = dat, 
-                 column0 = column0, 
-                 other_cutoff = 20, 
-                 title0 = "Plot of freqency and year, by research field")
+figure_print <- auto_plot_descr(dat1 = dat_descr, 
+                          column0 = column0, 
+                          other_cutoff = 0, 
+                          title0 = "Plot of freqency and year, by research field")
 
-  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
-         plot = figure_print, width = 6, height = 6)
-  figure_print
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
-Plot of freq and year, by gear type
-
 ```{r}
+#| label: gear_type-line
+#| tbl-cap: "Plot of frequency and year, by gear type. "
+
 column0 = "gear_type"
-figure_print <- auto_plot(dat1 = dat, 
-                 column0 = column0, 
-                 other_cutoff = 20, 
-                 title0 = "Plot of freqency and year, by location")
+figure_print <- auto_plot_descr(dat1 = dat_descr, 
+                          column0 = column0, 
+                          other_cutoff = 0, 
+                          title0 = "Plot of freqency and year, by gear type")
 
-  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
-         plot = figure_print, width = 6, height = 6)
-  figure_print
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
-Plot of freq and year, by region
+```{r}
+#| label: location-line
+#| tbl-cap: "Plot of frequency and year, by location. "
+
+column0 = "gear_type"
+figure_print <- auto_plot_descr(dat1 = dat_descr, 
+                          column0 = column0, 
+                          other_cutoff = 0, 
+                          title0 = "Plot of freqency and year, by location")
+
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
+```
 
 ```{r}
+#| label: survey-line
+#| tbl-cap: "Plot of frequency and year, by survey "
 
-column0 = "location"
+column0 = "survey"
+figure_print <- auto_plot_descr(dat1 = dat_descr, 
+                          column0 = column0, 
+                          other_cutoff = 0, 
+                          title0 = "Plot of freqency and year, by survey")
+
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
+```
+
+
+```{r}
+#| label: location-line
+#| tbl-cap: "Plot of frequency and year, by organism "
+
+# column0 = "organism"
+# figure_print <- auto_plot_descr(dat1 = dat_descr, 
+#                           column0 = column0, 
+#                           other_cutoff = 0, 
+#                           title0 = "Plot of freqency and year, by organism")
+# 
+# knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
+
+column0 = "organism"
 figure_print <- auto_plot(dat1 = dat, 
-                 column0 = column0, 
-                 other_cutoff = 20, 
-                 title0 = "Plot of freqency and year, by location")
-
-  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
-         plot = figure_print, width = 6, height = 6)
-  figure_print
+                          column0 = column0, 
+                          other_cutoff = 20, 
+                          title0 = "Plot of freqency and year, by organism")
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
 Plot of freq and year, by journal
 
 ```{r}
-# which publications have less than X (10?) hits over the whole timeseries?
+#| label: location-line
+#| tbl-cap: "Plot of frequency and year, by organism "
+
 column0 = "source_title"
 figure_print <- auto_plot(dat1 = dat, 
-                 column0 = column0, 
-                 other_cutoff = 20, 
-                 title0 = "Plot of freqency and year, by journal")
-
-  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
-         plot = figure_print, width = 6, height = 6)
-  figure_print
+                          column0 = column0, 
+                          other_cutoff = 20, 
+                          title0 = "Plot of freqency and year, by journal")
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
 Plot of freq and year, by affiliation
 
 ```{r}
+#| label: affiliation-line
+#| tbl-cap: "Plot of frequency and year, by affiliation "
+
 dat_aff <- dat %>% 
   dplyr::select(affiliations, publication_year) %>%
   tidyr::separate(col = "affiliations", sep = "; ", remove = FALSE, into = paste0("aff_", 1:30)) %>% 
   dplyr::select(-affiliations) %>%
   tidyr::pivot_longer(cols = paste0("aff_", 1:30), names_to = "aff_var", values_to = "aff_val") %>%
   dplyr::select(-aff_var) %>% 
-  dplyr::filter(!is.na(aff_val))
-  # dplyr::group_by(publication_year, aff_val) %>% 
-  # dplyr::summarise(freq = n()) %>% 
-  # dplyr::filter(!is.na(freq))
+  dplyr::filter(!is.na(aff_val)) %>% 
+  dplyr::mutate(aff_val1 = dplyr::case_when(
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "University") ~ "University", 
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "Universidad") ~ "University", 
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "Universita") ~ "University", 
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "Universite") ~ "University", 
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "College") ~ "University", 
+    
+    # grepl(x = aff_val, pattern = "The World Bank") ~ "International governance",
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "hospital") ~ "Medical",
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "Medical") ~ "Medical",
+    # Government
+    aff_val == "Alaska Department of Fish & Game" ~ "US State Government",    
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "National Oceanic and Atmospheric Administration") ~ "NOAA",    
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "NOAA") ~ "NOAA",
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "United States ") ~ "Other US Government",
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "NASA ") ~ "Other US Government",
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "US  ") ~ "Other US Government",
+    aff_val == "Tennessee Valley Authority" ~ "Other US Government",
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "U.S. ") ~ "Other US Government", 
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "The World Bank") ~ "International governance",
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "India") ~ "Indian Government",
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "Japan") ~ "Japanese Government",
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "Canada") ~ "Canadian Government",
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "Australia ") ~ "Australian Government",
+    grepl(x = aff_val, ignore.case = TRUE, 
+          pattern = "Norwegian ") ~ "Norwegian Government",
+    # Private Corporation
+    aff_val == "Shell" ~ "Private Corporation",  #  Oil Company
+    TRUE ~ "Other"
+  ))
+#%>%  
+# mutate(group = case_when(
+#   grepl("Bl", b) ~ "Group1",
+#                          grepl("re", b, ignore.case = TRUE) ~"Group2"))
+# dplyr::group_by(publication_year, aff_val) %>% 
+# dplyr::summarise(freq = n()) %>% 
+# dplyr::filter(!is.na(freq))
+
+# sort(unique(dat_aff$aff_val))
+# sort(unique(dat_aff$aff_val1))
+# sort(unique(dat_aff$aff_val[dat_aff$aff_val1 == "Other"]))
 
 column0 = "aff_val"
 figure_print <- auto_plot(dat1 = dat_aff, 
-                 column0 = column0, 
-                 other_cutoff = 20, 
-                 title0 = "Plot of freq and year, by affiliation")
+                          column0 = column0, 
+                          other_cutoff = 20, 
+                          title0 = "Plot of freq and year, by affiliation")
 
-  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
-         plot = figure_print, width = 6, height = 6)
-  figure_print
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
 Plot of freq and year, by government, academic, and industry affiliated coauthor
 
 ```{r}
-dat_aff <- dat_aff %>% 
-  dplyr::mutate(aff_val1 = dplyr::case_when(
-    grepl(x = aff_val, pattern = "NOAA") ~ "NOAA",
-    grepl(x = aff_val, pattern = "National Oceanic and Atmospheric Administration") ~ "NOAA"
-  ))
+#| label: affiliation-line1
+#| tbl-cap: "Plot of frequency and year, by affiliation "
 
 column0 = "aff_val1"
 figure_print <- auto_plot(dat1 = dat_aff, 
-                 column0 = column0, 
-                 other_cutoff = 20, 
-                 title0 = "Plot of freq and year, by affiliation")
+                          column0 = column0, 
+                          other_cutoff = 20, 
+                          title0 = "Plot of freq and year, by affiliation")
 
-  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
-         plot = figure_print, width = 6, height = 6)
-  figure_print
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
 Plot of freq and year, by key words
@@ -220,6 +501,9 @@ Plot of freq and year, by key words
 > need to find a way to group similar topics
 
 ```{r}
+#| label: keyword-line
+#| tbl-cap: "Plot of frequency and year, by keyword "
+
 dat_key <- dat %>% 
   dplyr::select(author_keywords, publication_year) %>%
   tidyr::separate(col = "author_keywords", sep = "; ", remove = FALSE, into = paste0("key_", 1:10)) %>% 
@@ -228,16 +512,17 @@ dat_key <- dat %>%
   dplyr::select(-key_var) %>% 
   dplyr::filter(!is.na(key_val)) %>% 
   dplyr::mutate(key_val = tolower(key_val), 
-               key_val = gsub(x = key_val, pattern = "-", replacement = " ") , 
-               key_val1 = dplyr::case_when(
-                 key_val == "fisheries" ~ "fisheries (and simlar)",
-                 key_val == "fishery" ~ "fisheries (and simlar)", 
-                 grepl(x = key_val, pattern = "coral") ~ "coral (and similar)", 
-                 grepl(x = key_val, pattern = "covid") ~ "covid (and similar)"
-                 # key_val == "fisheries" ~ "fisheries (and simlar)"
-                 # key_val == "fisheries" ~ "fisheries (and simlar)"
-               )
-               ) %>% 
+                key_val = gsub(x = key_val, pattern = "-", replacement = " ") , 
+                key_val1 = dplyr::case_when(
+                  key_val == "fisheries" ~ "fisheries (and simlar)",
+                  key_val == "fishery" ~ "fisheries (and simlar)", 
+                  grepl(x = key_val, pattern = "coral") ~ "coral (and similar)", 
+                  grepl(x = key_val, pattern = "covid") ~ "covid (and similar)", 
+                  # key_val == "fisheries" ~ "fisheries (and simlar)"
+                  # key_val == "fisheries" ~ "fisheries (and simlar)"
+                  TRUE ~ "Other"
+                )
+  ) %>% 
   dplyr::arrange(key_val)
 
 # sort(unique(dat_key$key_val))
@@ -245,17 +530,19 @@ dat_key <- dat %>%
 
 column0 = "key_val"
 figure_print <- auto_plot(dat1 = dat_key, 
-                 column0 = column0, 
-                 other_cutoff = 10, 
-                 title0 = "Plot of freq and year, by key word")
+                          column0 = column0, 
+                          other_cutoff = 10, 
+                          title0 = "Plot of freq and year, by key word")
 
-  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
-         plot = figure_print, width = 6, height = 6)
-  figure_print
+knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
+
 keyword cloud
 
 ```{r, eval = FALSE}
+#| label: keyword-wordcloud
+#| tbl-cap: "Word cloud plot of keyword "
+
 # https://cran.r-project.org/web/packages/ggwordcloud/vignettes/ggwordcloud.html
 # install.packages("ggwordcloud")
 library("ggwordcloud")
@@ -270,12 +557,32 @@ dat_key <- dat %>%
 
 figure_print <- figure_base + 
   ggwordcloud::geom_text_wordcloud(data = dat_key, 
-                       mapping = aes(label = key_val)) +
+                                   mapping = aes(label = key_val)) +
   scale_size_area(max_size = 30) +
   theme_minimal()
 
 column0 = "key"
-  ggsave(filename = here::here("output", paste0("figure_print-",column0,".png")),
-         plot = figure_print, width = 6, height = 6)
-  figure_print
+ggsave(filename = here::here("output", paste0("wordcloud-",column0,".png")),
+       plot = figure_print, width = 6, height = 6)
+# figure_print
+knitr::include_graphics(path = here::here("output", paste0("wordcloud-", column0,".png")))
 ```
+
+Size dot map of all locations
+
+```{r}
+#| label: location-map
+#| tbl-cap: "Map of research locations. "
+column0 <- "location"
+figure_print <- figure_base +
+  ggplot2::geom_sf(data = world_coordinates, 
+                   mapping = aes(fill = ID), 
+                   show.legend = FALSE) 
+
+ggsave(filename = here::here("output", paste0("map-",column0,".png")),
+       plot = figure_print, width = 6, height = 6)
+# figure_print
+knitr::include_graphics(path = here::here("output", paste0("map-", column0,".png")))
+```
+
+
