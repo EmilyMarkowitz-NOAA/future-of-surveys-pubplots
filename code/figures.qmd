@@ -18,6 +18,7 @@ date: "`r paste0(format(Sys.time(), '%B %d, %Y'))`"
 format: html
 toc-location: body
 toc-depth: 3
+number-sections: true
 message: FALSE
 warning: FALSE
 error: FALSE
@@ -217,7 +218,7 @@ We conducted a literature review using the web of science citation system (searc
 `r paste0(unique(dat_descr$val[dat_descr$var == "survey"]), collapse = ", ")`
 
 **Organism focus**: 
-`r paste0(unique(dat_descr$val[dat_descr$var == "organism"]), collapse = "/n")`
+`r paste0("/n", unique(dat_descr$val[dat_descr$var == "organism"]), collapse = "/n")`
 
 <!-- figure_print base (just for making following plots consistent) -->
   
@@ -614,11 +615,23 @@ Size dot map of all locations
 
 column0 <- "location"
 
+dat <- classifiers %>% 
+  dplyr::filter(!is.na(location_lat)) %>% 
+  dplyr::select(location, 
+                location_condensed, 
+                lat = location_lat, 
+                lon = location_lon) %>% 
+  sf::st_as_sf(coords = c("lon", "lat"),
+               crs = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0")
 
 figure_print <- figure_base +
   ggplot2::geom_sf(data = world_coordinates, 
                    mapping = aes(fill = ID), 
-                   show.legend = FALSE) 
+                   show.legend = FALSE) # %>% 
+  # ggplot2::geom_sf_label(
+  #   data = dat, 
+  #   mapping = aes(geometry = geometry, 
+  #                 label = location))
 
 ggsave(filename = here::here("output", paste0("map-",column0,".png")),
        plot = figure_print, width = 6, height = 6)
