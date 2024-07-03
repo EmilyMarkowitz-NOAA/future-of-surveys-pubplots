@@ -3,70 +3,55 @@
 
 ```{r {{var0}}-line}
 #| label: {{var0}}-line
-#| fig-cap: "Line plot of frequency and year, by research field. "
+#| fig-cap: paste("Line plot of frequency and year, by", {{var0}})
 
-column0 = "research_field"
+column0 = {{var0}}
 aaa <- auto_plot_descr(dat1 = dat_descr, 
                           column0 = column0, 
                           other_cutoff = 0, 
-                          title0 = "Plot of frequency and year, by research field")
+                          title0 = paste("Plot of frequency and year, by",{{var0}}))
 
 knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
 ```
 
 ```{r {{var0}}-bar}
 #| label: {{var0}}-bar
-#| fig-cap: "Bar plot of frequency and year, by research field. "
+#| fig-cap: paste("Bar plot of frequency and year, by",{{var0}})
 
 knitr::include_graphics(path = here::here("output", paste0("bar-", column0,".png")))
 ```
 
 ```{r {{var0}}-area}
 #| label: {{var0}}-area
-#| fig-cap: "Area plot of frequency and year, by research field. "
+#| fig-cap: paste("Area plot of frequency and year, by",{{var0}})
 
 knitr::include_graphics(path = here::here("output", paste0("area-", column0,".png")))
 ```
 
-```{r cond-{{var0}}-line}
-#| label: cond-{{var0}}-line
-#| fig-cap: "Line plot of frequency and year, by research field. [Condensed Categories] "
-
-column0 = "condensed_research_field"
-aaa <- auto_plot_descr(dat1 = dat_descr, 
-                          column0 = column0, 
-                          other_cutoff = 0, 
-                          title0 = "Plot of frequency and year, by research field [Condensed Categories]")
-
-knitr::include_graphics(path = here::here("output", paste0("line-", column0,".png")))
-```
-
-```{r cond-{{var0}}-bar}
-#| label: cond-{{var0}}-bar
-#| fig-cap: "Bar plot of frequency and year, by research field. [Condensed Categories] "
-
-knitr::include_graphics(path = here::here("output", paste0("bar-", column0,".png")))
-```
-
-```{r cond-{{var0}}-area}
-#| label: cond-{{var0}}-area
-#| fig-cap: "Area plot of frequency and year, by research field. [Condensed Categories] "
-
-knitr::include_graphics(path = here::here("output", paste0("area-", column0,".png")))
-```
-
-
-```{r cumulativefreq-{{var0}}, eval = FALSE}
+```{r cumulativefreq-{{var0}}-line}
 #| label: {{var0}}-cumline
-#| fig-cap: "Line plot of cumulative frequency and year, by research field. "
+#| fig-cap: paste("Line plot of cumulative frequency of",{{var0}})
 
 knitr::include_graphics(path = here::here("output", paste0("cumline-", column0,".png")))
 ```
 
+```{r cumulativefreq-{{var0}}-bar}
+#| label: {{var0}}-cumbar
+#| fig-cap: paste("Bar plot of cumulative frequency of",{{var0}})
+
+knitr::include_graphics(path = here::here("output", paste0("cumbar-", column0,".png")))
+```
+
+```{r cumulativefreq-{{var0}}-area}
+#| label: {{var0}}-cumarea
+#| fig-cap: paste("Area plot of cumulative frequency of",{{var0}})
+
+knitr::include_graphics(path = here::here("output", paste0("cumarea-", column0,".png")))
+```
 
 ```{r {{var0}}-table}
 #| label: {{var0}}-table
-#| tbl-cap: "Frequency and year, by research field. "
+#| tbl-cap: paste("Frequency and year, by",{{var0}})
 
 aaa$freq
 ```

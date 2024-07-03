@@ -286,7 +286,7 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
   # make data wrangling easier -------------------------------------------------
   dat0 <- dat1  %>% 
     dplyr::filter(var == column0) %>% 
-    dplyr::select(publication_year, val) %>% 
+    dplyr::select(publication_year, val, var) %>% 
     dplyr::filter(!is.na(val))
   
   # get totals for whole timeseries --------------------------------------------
@@ -391,7 +391,47 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
   # cumline plot ---------------------------------------------------------------
   
   figure_cumline <- figure_base + 
-    ggplot2::geom_line(data = dat_total_by_year, 
+    ggplot2::geom_line(data = dat_total_by_year,
+      mapping = aes(x = publication_year,
+                    y = cum_freq,
+                    color = val1),
+      linewidth = .75) +
+    ggplot2::scale_color_viridis_d(name = "", option = "mako", begin = .1, end = .7,
+                                   direction = -1) + 
+    ggplot2::scale_fill_viridis_d(name = "", option = "mako", begin = .1, end = .7,
+                                   direction = -1) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0) 
+  
+  ggsave(filename = here::here("output", paste0("cumline-", column0,".png")),
+         plot = figure_cumline, width = 6, height = 6)
+  
+  # cumbar plot ---------------------------------------------------------------
+  figure_cumbar <- figure_base + 
+    ggplot2::geom_bar(data = dat_total_by_year, 
+      mapping = aes(x = publication_year,
+                    y = cum_freq,
+                    fill=val1,
+                    color = val1),
+      position="stack",
+    stat="identity",
+      alpha = .5,
+      size = .75) +
+    ggplot2::scale_color_viridis_d(name = "", option = "mako", begin = .1, end = .7,
+                                   direction = -1) + 
+    ggplot2::scale_fill_viridis_d(name = "", option = "mako", begin = .1, end = .7,
+                                   direction = -1) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0) 
+  
+  ggsave(filename = here::here("output", paste0("cumbar-", column0,".png")),
+         plot = figure_cumbar, width = 6, height = 6)
+  
+  # cumarea plot ---------------------------------------------------------------
+  figure_cumarea <- figure_base + 
+    ggplot2::geom_area(data = dat_total_by_year, 
       mapping = aes(x = publication_year,
                     y = cum_freq,
                     fill=val1)
@@ -406,8 +446,8 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
     ylab("Frequency") +
     ggtitle(title0) 
   
-  ggsave(filename = here::here("output", paste0("cumline-", column0,".png")),
-         plot = figure_cumline, width = 6, height = 6)
+  ggsave(filename = here::here("output", paste0("cumarea-", column0,".png")),
+         plot = figure_cumarea, width = 6, height = 6)
   
   # frequency table ------------------------------------------------------------
   dat_total <- dat_total  %>% 
@@ -419,9 +459,12 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
               "bar_plot" = figure_bar,
               "area_plot" = figure_area,
               "cumline_plot" = figure_cumline,
+              "cumbar_plot" = figure_cumbar,
+              "cumarea_plot" = figure_cumarea,
               "freq" = dat_total))
 }
 ```
+
 
 
 ```{r run-child, results = 'asis'}
