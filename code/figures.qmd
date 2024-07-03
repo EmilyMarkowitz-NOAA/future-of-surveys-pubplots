@@ -429,7 +429,14 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
 
 ```{r run-child, results = 'asis'}
 src <- list()
-for (var0 in c("gear_type", "location", "research_field", "organism", "survey")){
+for (var0 in c("gear_type",
+               "condensed_gear", 
+               "location", 
+               "research_field",
+               "condensed_research_field", 
+               "organism", 
+               "condensed_organism",
+               "survey")){
   src[[var0]] <- knitr::knit_expand(here::here('code/figures_child.qmd'))
 }
 ```
@@ -442,7 +449,7 @@ for (var0 in c("gear_type", "location", "research_field", "organism", "survey"))
 
 ```{r}
 #| label: affiliation-line
-#| tbl-cap: "Plot of frequencyuency and year, by affiliation "
+#| tbl-cap: "Plot of frequency and year, by affiliation "
 
 dat_aff <- dat %>% 
   dplyr::select(affiliations, publication_year) %>%
@@ -524,7 +531,7 @@ Plot of frequency and year, by government, academic, and industry affiliated coa
 
 ```{r}
 #| label: affiliation-line1
-#| tbl-cap: "Plot of frequencyuency and year, by affiliation "
+#| tbl-cap: "Plot of frequency and year, by affiliation "
 
 column0 = "aff_val1"
 figure_print <- auto_plot(dat1 = dat_aff, 
@@ -541,7 +548,7 @@ Plot of frequency and year, by key words
 
 ```{r}
 #| label: keyword-line
-#| tbl-cap: "Plot of frequencyuency and year, by keyword "
+#| tbl-cap: "Plot of frequency and year, by keyword "
 
 dat_key <- dat %>% 
   dplyr::select(author_keywords, publication_year) %>%
