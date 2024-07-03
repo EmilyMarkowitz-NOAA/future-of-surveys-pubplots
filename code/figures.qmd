@@ -13,7 +13,7 @@ author:
     note: https://github.com/noaa-nefsc
     affiliations:
       - name: NOAA Fisheres Northeast Fisheries Science Center
-department: Groundfish Assessment Program
+department: Ecosystem Surveys Branch, Bottom Trawl Survey Program
 date: "`r paste0(format(Sys.time(), '%B %d, %Y'))`"
 format: html
 toc-location: body
