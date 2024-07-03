@@ -292,17 +292,13 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
   # get totals for whole timeseries --------------------------------------------
   dat_total <- dat0 %>% 
     dplyr::left_join(dat0 %>% 
-                       dplyr::arrange(publication_year) %>% 
                        dplyr::group_by(val) %>% 
                        dplyr::summarise(freq = n()) %>% 
-                       dplyr::mutate(cum_freq = cumsum(freq)) %>% 
                        dplyr::ungroup() %>%
                        dplyr::arrange(desc(freq)) %>%
                        dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) ) %>% 
-    dplyr::arrange(publication_year) %>% 
     dplyr::group_by(val) %>% 
     dplyr::summarise(freq = n()) %>% 
-    dplyr::mutate(cum_freq = cumsum(freq)) %>% 
     dplyr::ungroup() %>%
     dplyr::arrange(desc(freq)) %>% 
     dplyr::filter(!is.na(val)) %>% 
@@ -315,24 +311,25 @@ auto_plot_descr <- function(dat1, column0, other_cutoff = 0, title0 = "") {
   
   # prepare frequency data for each year ---------------------------------------
   dat_total_by_year <- dat0 %>%
-    dplyr::left_join(dat0 %>%
-                       dplyr::arrange(publication_year) %>%
-                       dplyr::group_by(val) %>%
+    dplyr::left_join(dat0 %>% # freq data for whole time series in paren
+                       dplyr::group_by(val) %>%                   
                        dplyr::summarise(freq = n()) %>%
-                       dplyr::mutate(cum_freq = cumsum(freq)) %>%
                        dplyr::ungroup() %>%
                        dplyr::arrange(desc(freq)) %>%
-                       dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) ) %>%
-    
-    # ADD CUMULATIVE FREQUENCIES HERE?
-    
+                       dplyr::mutate(val = ifelse(
+                         freq <= other_cutoff, "Other", val))) %>%
     dplyr::group_by(publication_year, val) %>%
     dplyr::summarise(freq = n()) %>%
     dplyr::ungroup() %>%
     dplyr::arrange(desc(freq))  %>%
     dplyr::filter(!is.na(val)) %>%
     dplyr::left_join(dat_total %>%
-    dplyr::select(-freq))
+    dplyr::select(-freq)) %>% 
+  
+    dplyr::arrange(publication_year) %>% 
+    dplyr::group_by(val) %>%
+    dplyr::mutate(cum_freq = cumsum(freq)) %>%
+    dplyr::ungroup() 
   
   # line plot ------------------------------------------------------------------
   figure_line <- figure_base + 
