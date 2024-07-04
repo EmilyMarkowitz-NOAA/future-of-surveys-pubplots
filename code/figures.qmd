@@ -31,6 +31,18 @@ fig-height: 6
 fig-width: 6
 ---
 
+```{r setup}
+knitr::opts_chunk$set(
+  echo = FALSE, warning = FALSE, error = FALSE, message = FALSE, 
+  tab.cap.style = "Table Caption", 
+  tab.cap.pre = "Table", 
+  tab.cap.sep = ". --", 
+  fig.cap.style = "Image Caption",
+  fig.cap.pre = "Figure ", 
+  fig.cap.sep = ". -- ", 
+  fig.align = 'center')
+```
+
 ```{r load-libraries, include = FALSE}
 PKG <- c("devtools", "googledrive", "ggplot2", 
          "magrittr", "here", "dplyr", "sf", "readxl", 
@@ -217,6 +229,9 @@ dat_key <- dat %>%
   dplyr::mutate(val = tolower(val), 
                 val = gsub(x = val, pattern = "-", replacement = " ") , 
                 val1 = dplyr::case_when(
+                  grepl(x = val, pattern = "bottom trawl") ~ "BTS",
+                  grepl(x = val, pattern = "acoustic") ~ "ATS",
+                  grepl(x = val, pattern = "stock assess") ~ "Stock assessment",
                   val == "fisheries" ~ "fisheries (and simlar)",
                   val == "fishery" ~ "fisheries (and simlar)", 
                   grepl(x = val, pattern = "coral") ~ "coral (and similar)", 
@@ -347,7 +362,9 @@ world_coordinates <- maps::map("world", plot = FALSE, fill = TRUE) %>%
 ```{r auto-plot, include = FALSE}
 auto_plot <- function(dat1, variable, other_cutoff = 0) {
   
-  title0 <- paste0("Frequency and year, by ", gsub(pattern = "_", replacement = " ", x = variable))
+    title0 <- paste0("Frequency and year, by ", gsub(pattern = "_", replacement = " ", x = variable))
+  title0_cum <- paste0("Cummulative frequency and year, by ", gsub(pattern = "_", replacement = " ", x = variable))
+
   
   # make data wrangling easier -------------------------------------------------
   dat0 <- dat1  %>% 
@@ -471,7 +488,7 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
                                   direction = -1) + 
     xlab("Year") +
     ylab("Frequency") +
-    ggtitle(title0) 
+    ggtitle(title0_cum) 
   
   ggsave(filename = here::here("output", paste0(variable,"-cumline.png")),
          plot = figure_cumline, width = 6, height = 6)
@@ -493,7 +510,7 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
                                   direction = -1) + 
     xlab("Year") +
     ylab("Frequency") +
-    ggtitle(title0) 
+    ggtitle(title0_cum) 
   
   ggsave(filename = here::here("output", paste0(variable, "-cumbar.png")),
          plot = figure_cumbar, width = 6, height = 6)
@@ -513,7 +530,7 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
                                   direction = -1) + 
     xlab("Year") +
     ylab("Frequency") +
-    ggtitle(title0) 
+    ggtitle(title0_cum) 
   
   ggsave(filename = here::here("output", paste0(variable,"-cumarea.png")),
          plot = figure_cumarea, width = 6, height = 6)
