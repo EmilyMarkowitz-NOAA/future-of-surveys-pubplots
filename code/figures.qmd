@@ -77,6 +77,27 @@ classifiers <- readxl::read_xlsx(path = here::here("data/data.xlsx"),
                                  skip = 1) %>% 
   janitor::clean_names() 
 
+# Clean classifiers ------------------------------------------------------------
+
+classifiers <- classifiers %>% 
+  dplyr::select("gear_type", # "gear_type_condensed", 
+                "research_field", # "research_field_condensed", 
+                "location", #"location_lat", "location_lon", 
+                "organism", # "organism_condensed", 
+                "survey") %>%
+  tidyr::pivot_longer(cols = c("gear_type", # "gear_type_condensed", 
+                "research_field", # "research_field_condensed", 
+                "location", #"location_lat", "location_lon", 
+                "organism", # "organism_condensed", 
+                "survey"), 
+                names_to = "var", values_to = "val") %>% 
+  dplyr::left_join(classifiers %>% 
+                     dplyr::filter(!is.na(location)) %>% 
+                     dplyr::select(val = location, 
+                                   val_lat = location_lat, 
+                                   val_lon = location_lon) %>% 
+                     dplyr::mutate(var = "location"))
+
 dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"), 
                          sheet = "Papers", 
                          skip = 1)
@@ -106,7 +127,8 @@ dat <- dat %>%
     organism_condensed,
     organism,
     include
-  ) 
+  ) %>% 
+  dplyr::select(-dplyr::ends_with("_condensed"))
 
 # Pivot data from categories ---------------------------------------------------
 
@@ -123,15 +145,15 @@ dat_descr <- dplyr::bind_rows(
                         values_to = "val") %>% 
     dplyr::mutate(var ="gear_type"), 
   
-  dat %>%
-    dplyr::filter(include == "YES") %>% 
-    dplyr::select(orig_order, 
-                  publication_year, 
-                  gear_type_condensed) %>% 
-    tidyr::pivot_longer(cols = gear_type_condensed, 
-                        names_to = "col",
-                        values_to = "val") %>% 
-    dplyr::mutate(var ="gear_type_condensed"), 
+  # dat %>%
+  #   dplyr::filter(include == "YES") %>% 
+  #   dplyr::select(orig_order, 
+  #                 publication_year, 
+  #                 gear_type_condensed) %>% 
+  #   tidyr::pivot_longer(cols = gear_type_condensed, 
+  #                       names_to = "col",
+  #                       values_to = "val") %>% 
+  #   dplyr::mutate(var ="gear_type_condensed"), 
   
   dat %>%
     dplyr::filter(include == "YES") %>% 
@@ -144,15 +166,15 @@ dat_descr <- dplyr::bind_rows(
                         values_to = "val") %>% 
     dplyr::mutate(var ="research_field"), 
   
-  dat %>%
-    dplyr::filter(include == "YES") %>% 
-    dplyr::select(orig_order, 
-                  publication_year, 
-                  research_field_condensed) %>% 
-    tidyr::pivot_longer(cols = research_field_condensed, 
-                        names_to = "col",
-                        values_to = "val") %>% 
-    dplyr::mutate(var ="research_field_condensed"), 
+  # dat %>%
+  #   dplyr::filter(include == "YES") %>% 
+  #   dplyr::select(orig_order, 
+  #                 publication_year, 
+  #                 research_field_condensed) %>% 
+  #   tidyr::pivot_longer(cols = research_field_condensed, 
+  #                       names_to = "col",
+  #                       values_to = "val") %>% 
+  #   dplyr::mutate(var ="research_field_condensed"), 
   
   dat %>%
     dplyr::filter(include == "YES") %>% 
@@ -191,17 +213,18 @@ dat_descr <- dplyr::bind_rows(
     dplyr::select(orig_order, 
                   publication_year, 
                   val = organism) %>% 
-    dplyr::mutate(var ="organism"),
+    dplyr::mutate(var ="organism")#,
   
-  dat %>%
-    dplyr::filter(include == "YES") %>% 
-    dplyr::select(orig_order, 
-                  publication_year, 
-                  organism_condensed) %>% 
-    tidyr::pivot_longer(cols = organism_condensed, 
-                        names_to = "col",
-                        values_to = "val") %>% 
-    dplyr::mutate(var ="organism_condensed")) %>% 
+  # dat %>%
+  #   dplyr::filter(include == "YES") %>% 
+  #   dplyr::select(orig_order, 
+  #                 publication_year, 
+  #                 organism_condensed) %>% 
+  #   tidyr::pivot_longer(cols = organism_condensed, 
+  #                       names_to = "col",
+  #                       values_to = "val") %>% 
+  #   dplyr::mutate(var ="organism_condensed")
+  ) %>% 
   
   dplyr::select(-dplyr::ends_with("col")) %>% 
   
@@ -216,33 +239,441 @@ dat_descr <- dplyr::bind_rows(
                      dplyr::mutate(var = "source_title")) # %>%   
 # tidyr::pivot_longer(cols = "publication_year", document_type)
 
+
+# Category condense function ---------------------------------------------------
+data_condense <- function(dat_descr, variable, list0){
+  
+  list00<-list0
+  for (i in 1:length(list0)){
+    list00[[i]] <- paste0('c(', paste0('"', list00[[i]], '"', collapse = ', '), ')')
+  }
+  
+  
+  eval(parse(text=
+paste0('dat_temp <- dat_descr %>%
+    dplyr::filter(var == "',variable,'" & !is.na(val)) %>%
+    dplyr::mutate(
+      val0 = val,
+      var = paste0("',variable,'_condensed"),
+val = dplyr::case_when(',
+                    paste0('val %in% ', 
+                           list00,
+                           ' ~ "', names(list00), '"', collapse = ",\n\n"),
+                    ', \n\nTRUE ~ "Other"
+                    ))')
+))
+
+temp <- paste0(sort(unique(dat_temp$val0[dat_temp$val == "Other"])), collapse = ", ")
+str0 <- paste0(variable, " condensed: what is in 'Other': ", ifelse(temp == "", "None", temp))
+print(str0)
+
+dat_descr <- dplyr::bind_rows(dat_descr, dat_temp)
+
+return(list("dat_descr" = dat_descr, 
+            "dat_temp" = dat_temp, 
+        "str0" = str0))
+}
+
+# Research field condensed -----------------------------------------------------
+
+list0 <- list(
+  "Population Biology/Stock Assessment" = 
+    c("Population Model", "Model-Based Indicies", "Design-based indicies", "Population Biology/Stock Assessment",  
+                               "Taxonomy", "Histology", "Otolith", "Food web model", "Recruitment"), 
+  "Management (Quantitative)" = c("Stock Assessment Model", "Reference points", "TACC Thresholds", "Harvest Control Rules", "Bycatch", "Management (Quantitative)"),
+  "Life History" = "Life History", 
+  "Ecosystems" = c("Ecosystem-based management", "Essential Fish Habitat", "Spatial Ecology", "Ecosystems"),
+  "Oceanography" = c("Oceanography"), 
+  "Genetics" = c("Genetics"), 
+  "Social Sciences" = c("Socio-Econ", "Economics", "Social Sciences"), 
+  "Spatial Ecology" = c("Species Distribution Model"), 
+  "Methods/Statistics/Design" = c("Combine Surveys", "Combine with Dependant", "Survey Design", 
+                               "Survey Statistics", "Catchability", "Sampling design", "Uncertainty", "Emerging Methods", "Methods/Statistics/Design"), 
+  "System Distruption" = c("Wind Farm mitigation", "COVID-19", "Survey Mitigation", "Oil spill"), 
+  "Climate change" = c("Climate change"), 
+  "Conservation" = c("MPA"), 
+  "Data availability" = c("Data availability"), 
+  "Review/Editorial" = c("Review", "Editorial"), 
+  "Outreach and Communication" = c("Outreach and Communication")
+  )
+
+aaa <- data_condense(dat_descr, variable = "research_field", list0)
+dat_descr <- aaa$dat_descr
+
+# dat_res <- dat_descr %>%
+#     dplyr::filter(var == "research_field" & !is.na(val)) %>%
+#     dplyr::mutate(
+#       val0 = val, 
+#       var = "research_field_condensed",
+#                   val = dplyr::case_when(
+#                     val %in% c("Population Model", "Model-Based Indicies", "Design-based indicies", "Population Biology/Stock Assessment",  
+#                                "Taxonomy", "Histology", "Otolith", "Food web model", "Recruitment") ~ 
+#                       "Population Biology/Stock Assessment",
+#                     val %in% c("Stock Assessment Model", "Reference points", "TACC Thresholds", "Harvest Control Rules", "Bycatch", "Management (Quantitative)") ~ 
+#                       "Management (Quantitative)",
+#                     val %in% c("Life History") ~ 
+#                       "Life History",
+#                     val %in% c("Ecosystem-based management", "Essential Fish Habitat", "Spatial Ecology", "Ecosystems") ~ 
+#                       "Ecosystems",
+#                     val %in% c("Oceanography") ~ 
+#                       "Oceanography",
+#                     val %in% c("Genetics") ~ 
+#                       "Genetics",
+#                     val %in% c("Socio-Econ", "Economics", "Social Sciences") ~ 
+#                       "Social Sciences",
+#                     val %in% c("Species Distribution Model") ~ 
+#                       "Spatial Ecology",
+#                     val %in% c("Combine Surveys", "Combine with Dependant", "Survey Design", 
+#                                "Survey Statistics", "Catchability", "Sampling design", "Uncertainty", "Emerging Methods", "Methods/Statistics/Design") ~ 
+#                       "Methods/Statistics/Design",
+#                     val %in% c("Wind Farm mitigation", "COVID-19", "Survey Mitigation", "Oil spill") ~ 
+#                       "System Distruption",
+#                     val %in% c("Climate change") ~ 
+#                       "Climate Change",
+#                     val %in% c("MPA") ~ 
+#                       "Conservation", 
+#                     val %in% c("Data availability") ~ 
+#                       "Data availability", 
+#                     val %in% c("Review", "Editorial") ~ 
+#                       "Review/Editorial", 
+#                     val %in% c("Outreach and Communication") ~ 
+#                       "Outreach and Communication",
+#                     TRUE ~ "Other"
+#                     ))
+# 
+# temp <- paste0(sort(unique(dat_res$val0[dat_res$val == "Other"])), collapse = ", ")
+# paste0("Research Field Condensed: what is in 'Other': ", ifelse(temp == "", "None", temp))
+# 
+# dat_descr <- dplyr::bind_rows(dat_descr, dat_res)
+
+# Gear type condensed -----------------------------------------------------
+
+list0 <- list(
+"Mobile Gear" = c("Ichthyoplankton", "Pelagic net", 
+                               "Poly Nor’Eastern, four-seam, hard bottom, high-rise bottom trawl (AFSC BTS AI & GOA)", 
+                               "Beach seine", "Bottom Trawl", "Beam Trawl", 
+                               "Otter Trawl", 
+                               "Gillnets", "Longline", "Bongo net", "Manta tow"), 
+"Fixed Gear" = c("Grab samples", "Traps", "Hook & Line"), 
+"Advanced Tech" = c("Still camera", "Video", 
+                               "3D stereo camera (e.g., stereo-baited remote underwater video (S-BRUV))",
+                               "Advanced Tech","Aerial survey", "Uncrewed surface vehicle saildrone"), 
+"Fisheries Dependent" = c("Fisheries-Dependant"), 
+"Acoustic" = c("Acoustics"), 
+"Diver" = c("underwater visual census"), 
+"Tagging" = c("Satellite tags", "Capture–recapture"), 
+"Stock assessments" = c("Stock assessments"), 
+"Wind farms" = c("Wind farms"),   
+"Fisher interviews" = c("Fisher interviews"),  
+"None" = c("None"), 
+"Multiple" = c("Multiple"))
+
+aaa <- data_condense(dat_descr, variable = "gear_type", list0)
+dat_descr <- aaa$dat_descr
+
+# dat_geartype <- dat_descr %>%
+#     dplyr::filter(var == "gear_type" & !is.na(val)) %>%
+#     dplyr::mutate(var = "gear_type_condensed",
+#        val0 = val, 
+#                  val = dplyr::case_when(
+#                     val %in% c("Ichthyoplankton", "Pelagic net", 
+#                                "Poly Nor’Eastern, four-seam, hard bottom, high-rise bottom trawl (AFSC BTS AI & GOA)", 
+#                                "Beach seine", "Bottom Trawl", "Beam Trawl", 
+#                                "Otter Trawl", 
+#                                "Gillnets", "Longline", "Bongo net", "Manta tow") ~ 
+#                       "Mobile Gear",
+#                     val %in% c("Grab samples", "Traps", "Hook & Line") ~ 
+#                       "Fixed Gear",
+#                     val %in% c("Still camera", "Video", 
+#                                "3D stereo camera (e.g., stereo-baited remote underwater video (S-BRUV))",
+#                                "Advanced Tech","Aerial survey", "Uncrewed surface vehicle saildrone") ~ 
+#                       "Advanced Tech",
+#                     val %in% c("Fisheries-Dependant") ~ 
+#                       "Fisheries Dependent",
+#                     val %in% c("Acoustics") ~ 
+#                       "Acoustic",
+#                     val %in% c("underwater visual census") ~ 
+#                       "Diver",
+#                     val %in% c("Satellite tags", "Capture–recapture") ~ 
+#                       "Tagging",
+#                     val %in% c("Stock assessments") ~ "Stock assessments",  
+#                     val %in% c("Wind farms") ~ "Wind farms",  
+#                     val %in% c("Fisher interviews") ~ "Fisher interviews",  
+#                     val %in% c("None") ~ "None",  
+#                     val %in% c("Multiple") ~ "Multiple",
+#                     TRUE ~ "Other"))
+# 
+# temp <- paste0(sort(unique(dat_geartype$val0[dat_geartype$val == "Other"])), collapse = ", ")
+# paste0("Gear type Condensed: what is in 'Other': ", ifelse(temp == "", "None", temp))
+# 
+# dat_descr <- dplyr::bind_rows(dat_geartype, dat_res)
+
+# location condensed -----------------------------------------------------------
+
+list0 <- list(
+"NW Atlantic" = c("Mid-NW Atlantic", "NW Atlantic", "South-NW Atlantic"), 
+"NE Atlantic" = c("Azores", "Celtic Sea", "NE Atlantic", "Iberian Coast"),
+"SE Atlantic" = c("South Africa"),
+"SW Atlantic" = c("Brazil"), 
+"Caribbean" = c("Caribbean"), 
+"NE Pacific" = c("Alaska", "NE Pacific", "Pacific West Coast"), 
+"NW Pacific" = c("China", "Russia"), 
+"SW Pacific" = c("Tasman Sea", "Coral Sea", "Arafura Sea", "Great Australian Bight"), 
+"Central Pacific" = c("Hawaii"), 
+"Southern Ocean" = c("Southern Ocean"), 
+"North Sea" = c("English Channel", "Greater North Sea"), 
+"Mediterranean Sea" = c("Adriatic Sea", "Mediterranean Sea"), 
+"Baltic Sea" = c("Baltic Sea"), 
+"Gulf of Mexico" = c("Gulf of Mexico"), 
+"Arctic Ocean" = c("Barents Sea"), 
+"Global" = "Global",
+"Simulation" = "Simulation")
+
+aaa <- data_condense(dat_descr, variable = "location", list0)
+
+dat_descr <- aaa$dat_descr
+
+# dat_loc <- dat_descr %>% 
+#     dplyr::filter(var == "location" & !is.na(val)) %>% 
+#     dplyr::mutate(var = "location_condensed",
+#        val0 = val, 
+#                   val = dplyr::case_when(
+#                     val %in% c("Mid-NW Atlantic", "NW Atlantic", "South-NW Atlantic") ~ 
+#                       "NW Atlantic",
+#                     val %in% c("Azores", "Celtic Sea", "NE Atlantic", "Iberian Coast") ~ 
+#                       "NE Atlantic",
+#                     val %in% c("South Africa") ~ 
+#                       "SE Atlantic",
+#                     val %in% c("Brazil") ~ 
+#                       "SW Atlantic",
+#                     val %in% c("Caribbean") ~ 
+#                       "Caribbean",
+#                     val %in% c("Alaska", "NE Pacific", "Pacific West Coast") ~ 
+#                       "NE Pacific",
+#                     val %in% c("China", "Russia") ~ 
+#                       "NW Pacific",
+#                     val %in% c("Tasman Sea", "Coral Sea", "Arafura Sea", "Great Australian Bight") ~ 
+#                       "SW Pacific",
+#                     val %in% c("Hawaii") ~ 
+#                       "Central Pacific",
+#                     val %in% c("Southern Ocean") ~ 
+#                       "Southern Ocean",
+#                     val %in% c("English Channel", "Greater North Sea") ~ 
+#                       "North Sea",
+#                     val %in% c("Adriatic Sea", "Mediterranean Sea") ~ 
+#                       "Mediterranean Sea",
+#                     val %in% c("Baltic Sea") ~ 
+#                       "Baltic Sea",
+#                     val %in% c("Gulf of Mexico") ~ 
+#                       "Gulf of Mexico",
+#                     val %in% c("Barents Sea") ~ 
+#                       "Arctic Ocean",
+#                     val %in% c("Global") ~ "Global",
+#                     val %in% c("Simulation") ~ "Simulation",
+#                       TRUE ~ "Other"))
+# 
+# 
+# temp <- paste0(sort(unique(dat_loc$val0[dat_loc$val == "Other"])), collapse = ", ")
+# paste0("Location Condensed: what is in 'Other': ", ifelse(temp == "", "None", temp))
+# 
+# dat_descr <- dplyr::bind_rows(dat_loc, dat_res)
+
+classifiers_temp <- 
+  data.frame(
+    var = "location_condensed",
+  val  = c("NW Atlantic", "NE Atlantic", "Caribbean", "NE Pacific", "NW Pacific", 
+                          "SW Pacific", "Central Pacific", "Southern Ocean", 
+                          "North Sea", "Mediterranean Sea", 
+                          "Southern Ocean", "Baltic Sea", "Gulf of Mexico", "Arctic Ocean", 
+                          "SE Atlantic", "SW Atlantic", 
+                          "Global", "Simulation", "Other"),
+  val_lat = c(43.292702, 49.80919, 15.41066, 53.199042, 56.728246, 
+                             35.995232, 23.845024, -52.791454, 
+                             61.764, 35.689542, 
+              -64.822538, 58.42283, 25.116756, 83.954235,
+                             -20.161551, -28.943148, 
+                             -11.67696, -39.625135, 61.552865),
+  val_lon = c(-50.260647, -19.147368, -66.959865, -166.803612, 167.708109, 
+                             150.305766, 177.727639, 75.268651, 
+                             -2.084405, 17.559606, 
+                             36.290404,	19.569313, -89.265027, 38.138635, 
+                             -4.220581, -35.070190,
+                             -149.731341, -147.797747, 98.435668) ) 
+
+classifiers <- classifiers_temp %>% 
+  dplyr::bind_rows(classifiers)
+
+print(paste0("In classifiers, not in category: ", paste0(setdiff(classifiers_temp$val, names(list0)), collapse = ", ")))
+print(paste0("In category, not in : classifiers", paste0(setdiff(names(list0), classifiers_temp$val), collapse = ", ")))
+
 # Clean key data ---------------------------------------------------------------
 
-dat_key <- dat %>%
-  dplyr::filter(include == "YES") %>% 
-  dplyr::select(author_keywords, publication_year) %>%
+# Create key word categories ---------------------------------------------------
+
+dat_temp <- dat %>%
+  dplyr::filter(!(include %in% c("NO", "DUPLICATE", "MAYBE"))) %>%
+  dplyr::select(author_keywords, publication_year, orig_order) %>%
   tidyr::separate(col = "author_keywords", sep = "; ", remove = FALSE, into = paste0("key_", 1:10)) %>% 
   dplyr::select(-author_keywords) %>%
   tidyr::pivot_longer(cols = paste0("key_", 1:10), names_to = "key_var", values_to = "val") %>%
   dplyr::select(-key_var) %>% 
   dplyr::filter(!is.na(val)) %>% 
-  dplyr::mutate(val = tolower(val), 
-                val = gsub(x = val, pattern = "-", replacement = " ") , 
-                val1 = dplyr::case_when(
-                  grepl(x = val, pattern = "bottom trawl") ~ "BTS",
-                  grepl(x = val, pattern = "acoustic") ~ "ATS",
-                  grepl(x = val, pattern = "stock assess") ~ "Stock assessment",
-                  val == "fisheries" ~ "fisheries (and simlar)",
-                  val == "fishery" ~ "fisheries (and simlar)", 
-                  grepl(x = val, pattern = "coral") ~ "coral (and similar)", 
-                  grepl(x = val, pattern = "covid") ~ "covid (and similar)", 
-                  # val == "fisheries" ~ "fisheries (and simlar)"
-                  # val == "fisheries" ~ "fisheries (and simlar)"
-                  TRUE ~ "Other"
-                )
-  ) %>% 
-  tidyr::pivot_longer(cols = c("val", "val1"), names_to = "var", values_to = "val") %>% 
-  dplyr::mutate(var = ifelse(var == "val", "key", "key_condensed"))
+  dplyr::mutate(
+    var = "keywords", 
+    val = tolower(val), 
+                val = gsub(x = val, pattern = "-", replacement = " "))
+
+temp <- sort(unique(dat_temp$val))
+
+dat_descr <- dplyr::bind_rows(dat_descr, dat_temp)
+find_words <- function(word, where) {
+  temp <- c()
+  for (i in 1:length(word)){
+    temp <- c(temp, 
+              where[grepl(x = where, ignore.case = TRUE, pattern = word[i])])
+  }
+ return(sort(unique(temp)))
+}
+
+list0 <- list(
+# "BTS" = c(find_words(where = dat_temp$val, word = "bottom trawl")), 
+"Longline" = c(find_words(where = dat_temp$val, word = c("longline"))), 
+"BTS" = c(find_words(where = dat_temp$val, word = c("bottom trawl"))), 
+"ATS" = c(find_words(where = dat_temp$val, word = c("acoustic", "echo", "sonar"))), 
+"Ring nets" = c(find_words(where = dat_temp$val, word = c("ring nets"))), 
+"Trap" = c(find_words(where = dat_temp$val, word = c("trap"))), 
+"Taxonomy" = c(find_words(where = dat_temp$val, word = c("taxonom", "synchrony"))),
+"Transboundary" = c(find_words(where = dat_temp$val, word = c("transboundary"))),
+
+
+"Polcy" = c(find_words(where = dat_temp$val, word = c("policy"))), 
+"Management" = c(find_words(where = dat_temp$val, word = c("management", "msa", "strategy framework", "lme", "marine stewardship"))),
+"Conservation" = c(find_words(where = dat_temp$val, word = c("restoration", "conservation", "protected", "rare", "species of concern"))),
+
+"Disasters" = c(find_words(where = dat_temp$val, word = c("exxon valdez", "weather", "oil spill", "oil"))), 
+"COVID-19" = c(find_words(where = dat_temp$val, word = "covid")), 
+"wind farm" = c(find_words(where = dat_temp$val, word = "wind farm")), 
+"Stock assessment" = c(find_words(where = dat_temp$val, word = 
+                                    c("stock", "assessment", "hcr", "harvest control rule", "reference points", 
+                                                                 "allowable commercial catch", "allowable catch", 
+                                      "tac", "trip limit"))), 
+
+"Fishery dependent" = c(find_words(where = dat_temp$val, word = c("fishery dependent"))), 
+"Fishery independent" = c(find_words(where = dat_temp$val, word = c("fishery independent"))), 
+"Recreational fisheries" = c(find_words(where = dat_temp$val, word = c("angler", "recreational", "catch and release"))), 
+
+"Oceanography" = c(find_words(where = dat_temp$val, word = c("thermocline", "rugosity", "nutrient and carbon cycling"))), 
+"Satellite data" = c(find_words(where = dat_temp$val, word = c("lidar", "satellite"))), 
+"Oceanography" = c(find_words(where = dat_temp$val, word = c("thermocline", "rugosity", "nutrient and carbon cycling"))), 
+
+
+"Stakeholder" = c(find_words(where = dat_temp$val, word = c("stakeholder"))), 
+"Survey design" = c(find_words(where = dat_temp$val, word = 
+                                 c("design", "survey est", "footrope", "stratification",  "fixed station", 
+                                   "area swept", 
+                                   "net spread", "survey optomization", "stratified random", "mesh size"))), 
+"Samples" = c(find_words(where = dat_temp$val, word = c("sampl", "voucher"))), 
+
+"Modeling" = c(find_words(where = dat_temp$val, word = 
+                            c("model", "variable", "variance", "parsimony", 
+                              "autocorrelation", "optimization", "equation", "statistic", 
+                              "likelihood", 
+                                                         "prediction", "analysis", "randomization"))), 
+"Camera" = c(find_words(where = dat_temp$val, word = c("camera", "video", "television", "photography"))), 
+"Economics" = c(find_words(where = dat_temp$val, word = c("econom", "socio", "interview", " mail", "questionnaire"))), 
+"Bycatch" = c(find_words(where = dat_temp$val, word = c("bycatch", "by catch"))), 
+"Indicies" = c(find_words(where = dat_temp$val, word = c("index", "indic", "catch per unit effort", "cpue", "biomass", "abundance","population"))), 
+"USV" = c(find_words(where = dat_temp$val, word = c("uncrewed surface vehicle", "usv"))), 
+"Ecology" = c(find_words(where = dat_temp$val, word = c("preditor", "prey", "ecolog", "preditor", "niche", "adaptation"))), 
+"Evolution" = find_words(where = dat_temp$val, word = c("evolution")),
+"Diversity" = c(find_words(where = dat_temp$val, word = 
+                             c("richness", "diversity", "species composition"))), 
+"Life history" = c(find_words(where = dat_temp$val, word = 
+                                c("spawn", "settlement", "sex", "nurseries", "year class", 
+                                  "larv", "egg", "reproduc", "migration", "breeding", "mortality", 
+                                  "maturity", "fecundity", "life history", "recruitment",
+                                  "young of year"))), 
+"Morphometrics" = c(find_words(where = dat_temp$val, word = c("morphomet", "body mass", "body size"))), 
+"Age and growth" = c(find_words(where = dat_temp$val, word = c("otolith", "age", "length"))), 
+
+"Food habits" = c(find_words(where = dat_temp$val, word = c("stomach", "food habit"))), 
+"Species distribution" = c(find_words(where = dat_temp$val, word = c("habitat suitability", "essential fish hab", "sdm", 
+                                                                     "Spatiotemporal", "spatiotemp", "spatio temp", "habitat mapping",
+                                                                     "species distribution", "spatial distribution"))), 
+"Genetics" = c(find_words(where = dat_temp$val, word = c("geneti", "mitochondrial", "genome"))), 
+"Temperature" = c(find_words(where = dat_temp$val, word = c("heatwave", "temperature", "cold pool"))), 
+"Catchability" = c(find_words(where = dat_temp$val, word = c("catchability"))), 
+"Diving" = c(find_words(where = dat_temp$val, word = c("diving"))), 
+"Traffic light" = c(find_words(where = dat_temp$val, word = c("traffic light"))), 
+"Tagging" = c(find_words(where = dat_temp$val, word = c("mark recapture", "tag", "transmitter", "telemetry"))), 
+
+"Turtle" = c(find_words(where = dat_temp$val, word = c("turtle"))), 
+"Fish" = c(find_words(where = dat_temp$val, word = c(" sole", " cod", " menhaden", "fish", " turbot", "thunnus", 
+                                                     "salmon", "raja ", "flounder", "stickleback", "croaker", 
+                                                     "grouper", "herring", "merluccius",
+                                                     "marlin", "snapper", "rays", "sockeye", "sciaeni", "whiting", 
+                                                     "teleost", "tilapia", "abalone", "tuna", "pollock", 
+                                                     "alosa", 
+                                                     "limanda"))), 
+
+"Seaweed" = c(find_words(where = dat_temp$val, word = c("saccharina", "sea weed", "seaweed", "macroalgae", "alga"))),
+"Urchin" = c(find_words(where = dat_temp$val, word = c("strongy", "urchin"))), 
+"Lobster" = c(find_words(where = dat_temp$val, word = c("lobster", "jasus"))), 
+"Crab" = c(find_words(where = dat_temp$val, word = c("crab"))), 
+"Scallop" = c(find_words(where = dat_temp$val, word = c("scallop"))),
+"Birds" = c(find_words(where = dat_temp$val, word = c("bird", "waterfowl", "abatross"))),
+"Sponge" = c(find_words(where = dat_temp$val, word = c("sponge"))),
+"Clam" = c(find_words(where = dat_temp$val, word = c("clam", "goeduck"))), 
+"Coral" = c(find_words(where = dat_temp$val, word = c("coral", "reef"))), 
+"Shrimp" = c(find_words(where = dat_temp$val, word = c("shrimp"))), 
+"Oysters" = c(find_words(where = dat_temp$val, word = c("oyster"))), 
+"Sharks" = c(find_words(where = dat_temp$val, word = c("shark"))), 
+"Marine mammals" = c(find_words(where = dat_temp$val, word = c("mammals", "megafauna", "dolphin", "cetacean", "seal", "sea lion"))), 
+
+
+"Data" = c(find_words(where = dat_temp$val, word = c("metadata", "access to information"))),
+
+"Place Phrases" = c(find_words(where = dat_temp$val, word = c("atlantic", "gulf", "watershed", "pacific", "ocean", "channel", 
+                                                              "shelf", "sea", "estuary", "strait", "bay", "canyon", "river", 
+                                                              "south", "north", "east", "west", "central", "degrees e", "degrees n", 
+                                                              "africa", "niger", "isles", "british columbia", 
+                                                              "lake", "mangrove", 
+                                                              "senegal", "uganda", "st lucia", "virgin islands", "louisiana", 
+                                                              "st. croix", "texas", "washington", "state", "antarctic"))), 
+"Other spatial phrases" = c(find_words(where = dat_temp$val, word = c("spatial"))), 
+"Other trawl phrases" = c(find_words(where = dat_temp$val, word = c("trawl"))), 
+"Other survey phrases" = c(find_words(where = dat_temp$val, word = c("survey"))) 
+)
+
+aaa <- data_condense(dat_descr, variable = "keywords", list0)
+
+dat_descr <- aaa$dat_descr
+
+# dat_key <- dat %>%
+#   dplyr::filter(include == "YES") %>% 
+#   dplyr::select(author_keywords, publication_year) %>%
+#   tidyr::separate(col = "author_keywords", sep = "; ", remove = FALSE, into = paste0("key_", 1:10)) %>% 
+#   dplyr::select(-author_keywords) %>%
+#   tidyr::pivot_longer(cols = paste0("key_", 1:10), names_to = "key_var", values_to = "val") %>%
+#   dplyr::select(-key_var) %>% 
+#   dplyr::filter(!is.na(val)) %>% 
+#   dplyr::mutate(val = tolower(val), 
+#                 val = gsub(x = val, pattern = "-", replacement = " ") , 
+#                 val1 = dplyr::case_when(
+#                   grepl(x = val, pattern = "bottom trawl") ~ "BTS",
+#                   grepl(x = val, pattern = "acoustic") ~ "ATS",
+#                   grepl(x = val, pattern = "stock assess") ~ "Stock assessment",
+#                   val == "fisheries" ~ "fisheries (and simlar)",
+#                   val == "fishery" ~ "fisheries (and simlar)", 
+#                   grepl(x = val, pattern = "coral") ~ "coral (and similar)", 
+#                   grepl(x = val, pattern = "covid") ~ "covid-19", 
+#                   # val == "fisheries" ~ "fisheries (and simlar)"
+#                   # val == "fisheries" ~ "fisheries (and simlar)"
+#                   TRUE ~ "Other"
+#                 )
+#   ) %>% 
+#   tidyr::pivot_longer(cols = c("val", "val1"), names_to = "var", values_to = "val") %>% 
+#   dplyr::mutate(var = ifelse(var == "val", "key", "key_condensed"))
 
 dat_descr <- dplyr::bind_rows(dat_descr, dat_key)
 
