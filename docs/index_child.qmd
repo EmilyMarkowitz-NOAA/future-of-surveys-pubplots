@@ -13,50 +13,58 @@ aaa <- auto_plot(dat1 = dat_descr,
 
 ## `r stringr::str_to_title(var00)`
 
-### Non-cumulative
+### Non-cumulative Line Plot
 
 ```{r}
 #| label: {{var0}}-line
 #| fig-cap: !expr paste0("Line plot of frequency and year, by ", var00)
 
-knitr::include_graphics(path = here::here("output", paste0("{{var0}}-line.png")))
+knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste0("{{var0}}-line.png")))
 ```
+
+### Non-cumulative Bar Plot
 
 ```{r}
 #| label: {{var0}}-bar
 #| fig-cap: !expr paste0("Bar plot of frequency and year, by ", var00)
 
-knitr::include_graphics(path = here::here("output", paste0("{{var0}}-bar.png")))
+knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste0("{{var0}}-bar.png")))
 ```
+
+### Non-cumulative Area Plot
 
 ```{r}
 #| label: {{var0}}-area
 #| fig-cap: !expr paste0("Area plot of frequency and year, by ",var00)
 
-knitr::include_graphics(path = here::here("output", paste0("{{var0}}-area.png")))
+knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste0("{{var0}}-area.png")))
 ```
 
-### Cumulative
+### Cumulative Line Plot
 
 ```{r}
 #| label: {{var0}}-cumline
 #| fig-cap: !expr paste0("Line plot of cumulative frequency of ",var00)
 
-knitr::include_graphics(path = here::here("output", paste0("{{var0}}-cumline.png")))
+knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste0("{{var0}}-cumline.png")))
 ```
+
+### Cumulative Bar Plot
 
 ```{r}
 #| label: {{var0}}-cumbar
 #| fig-cap: !expr paste0("Bar plot of cumulative frequency of ",var00)
 
-knitr::include_graphics(path = here::here("output", paste0("{{var0}}-cumbar.png")))
+knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste0("{{var0}}-cumbar.png")))
 ```
+
+### Cumulative Area Plot
 
 ```{r}
 #| label: {{var0}}-cumarea
 #| fig-cap: !expr paste0("Area plot of cumulative frequency of ",var00)
 
-knitr::include_graphics(path = here::here("output", paste0("{{var0}}-cumarea.png")))
+knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste0("{{var0}}-cumarea.png")))
 ```
 
 ### Word Cloud
@@ -83,10 +91,10 @@ figure_print <- wordcloud(words = dat2$Category,
                           rot.per=0.35,
                           colors=brewer.pal(8, "Dark2"))
 
-ggsave(filename = here::here("output", paste0("{{var0}}-wordcloud.png")),
+ggsave(filename = here::here("docs/index_files/figure-html/", paste0("{{var0}}-wordcloud.png")),
        plot = figure_print, width = 6, height = 6)
 
-# knitr::include_graphics(path = here::here("output", paste0("{{var0}}-wordcloud.png")))
+# knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste0("{{var0}}-wordcloud.png")))
 ```
 
 `r ifelse(("{{var0}}" %in% c("location", "location_condensed")), paste0("### Map"), "")`
@@ -129,10 +137,10 @@ figure_print <- figure_base +
     legend.title.position = "top"
   )
 
-ggsave(filename = here::here("output", paste0("{{var0}}-map-1.png")),
+ggsave(filename = here::here("docs/index_files/figure-html/", paste0("{{var0}}-map-1.png")),
        plot = figure_print, width = 6, height = 6)
 # figure_print
-knitr::include_graphics(path = here::here("output", paste0("{{var0}}-map-1.png")))
+knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste0("{{var0}}-map-1.png")))
 ```
 
 ```{r, eval = ("{{var0}}" %in% c("location", "location_condensed"))}
@@ -163,10 +171,10 @@ figure_print <- figure_base +
     legend.title.position = "top"
   )
 
-ggsave(filename = here::here("output", paste0("{{var0}}-map-2.png")),
+ggsave(filename = here::here("docs/index_files/figure-html/", paste0("{{var0}}-map-2.png")),
        plot = figure_print, width = 6, height = 6)
 # figure_print
-knitr::include_graphics(path = here::here("output", paste0("{{var0}}-map-2.png")))
+knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste0("{{var0}}-map-2.png")))
 ```
 
 ### Summary table

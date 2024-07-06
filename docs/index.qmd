@@ -1156,8 +1156,8 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
     ylab("Frequency") +
     ggtitle(title0) 
   
-  ggsave(filename = here::here("output", paste0( variable,"-line.png")),
-         plot = figure_line, width = 6, height = 6)
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0( variable,"-line.png")),
+         plot = figure_line, width = 6.5, height = 8)
   
   # bar plot -------------------------------------------------------------------
   figure_bar <- figure_base + 
@@ -1178,8 +1178,8 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
     ylab("Frequency") +
     ggtitle(title0) 
   
-  ggsave(filename = here::here("output", paste0(variable,"-bar.png")),
-         plot = figure_bar, width = 6, height = 6)
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0(variable,"-bar.png")),
+         plot = figure_bar, width = 6.5, height = 8)
   
   # area plot ----------------------------------------------------------------
   figure_area <- figure_base + 
@@ -1198,8 +1198,8 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
     ylab("Frequency") +
     ggtitle(title0) 
   
-  ggsave(filename = here::here("output", paste0(variable,"-area.png")),
-         plot = figure_area, width = 6, height = 6)
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0(variable,"-area.png")),
+         plot = figure_area, width = 6.5, height = 8)
   
   # cumline plot ---------------------------------------------------------------
   
@@ -1217,8 +1217,8 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
     ylab("Frequency") +
     ggtitle(title0_cum) 
   
-  ggsave(filename = here::here("output", paste0(variable,"-cumline.png")),
-         plot = figure_cumline, width = 6, height = 6)
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0(variable,"-cumline.png")),
+         plot = figure_cumline, width = 6.5, height = 8)
   
   # cumbar plot ---------------------------------------------------------------
   figure_cumbar <- figure_base + 
@@ -1239,8 +1239,8 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
     ylab("Frequency") +
     ggtitle(title0_cum) 
   
-  ggsave(filename = here::here("output", paste0(variable, "-cumbar.png")),
-         plot = figure_cumbar, width = 6, height = 6)
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0(variable, "-cumbar.png")),
+         plot = figure_cumbar, width = 6.5, height = 8)
   
   # cumarea plot ---------------------------------------------------------------
   figure_cumarea <- figure_base + 
@@ -1259,8 +1259,8 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
     ylab("Frequency") +
     ggtitle(title0_cum) 
   
-  ggsave(filename = here::here("output", paste0(variable,"-cumarea.png")),
-         plot = figure_cumarea, width = 6, height = 6)
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0(variable,"-cumarea.png")),
+         plot = figure_cumarea, width = 6.5, height = 8)
   
   # frequency table ------------------------------------------------------------
   
@@ -1291,7 +1291,7 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
 ```{r run-child, results = 'asis'}
 
 temp <- sort(unique(dat_descr$var))
-temp <- temp[temp != "affiliation"]
+temp <- temp[!(temp %in% c("affiliations", "keywords"))]
 
 src <- list()
 for (var0 in temp){
