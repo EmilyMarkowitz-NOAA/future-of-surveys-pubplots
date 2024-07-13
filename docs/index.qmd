@@ -84,7 +84,7 @@ paste0('val %in% ',
   
   temp <- paste0(sort(unique(dat_temp$val0[dat_temp$val == "Other"])), collapse = ", ")
   str0 <- paste0(variable, " condensed: what is in 'Other': ", 
-                 ifelse(temp == "", "None", paste0("(",sum(dat_temp$val == "Other")," phrases) ", temp)))
+                 ifelse(temp == "", "None", paste0("(",length(unique(dat_temp$val0[dat_temp$val == "Other"]))," phrases) ", temp)))
   print(str0)
   
   dat_descr <- dplyr::bind_rows(dat_descr, dat_temp)
@@ -105,32 +105,30 @@ find_words <- function(word, where) {
 }
 ```
 
-
-```{r google-drive-sign-in, include = FALSE}
+```{r load-data, echo = FALSE}
+# Download google spreadsheet --------------------------------------------------
+googledrive_dl <- "https://docs.google.com/spreadsheets/d/1l6a9Wb3M1PQV9UwHk7Ddfiiuq5U5lVW5"
+if (FALSE) {
 # SIGN INTO GOOGLE DRIVE--------------------------------------------------------
 googledrive_dl <- TRUE
 googledrive::drive_deauth()
 googledrive::drive_auth()
 2
-```
-
-```{r load-data, echo = FALSE}
-# Download google spreadsheet --------------------------------------------------
-googledrive_dl <- "https://docs.google.com/spreadsheets/d/1l6a9Wb3M1PQV9UwHk7Ddfiiuq5U5lVW5"
 
 googledrive::drive_download(file = googledrive::as_id(googledrive_dl),  #"gap_survey_progression.csv",
                             # type = "xlsx", 
                             overwrite = TRUE, 
                             path = here::here("data/data.xlsx"))
+}
 
-classifiers <- readxl::read_xlsx(path = here::here("data/data.xlsx"), 
-                                 sheet = "Classifiers", 
-                                 skip = 1) %>% 
-  janitor::clean_names() 
 ```
 
 ```{r data-wrangle-classifiers}
 # Clean classifiers ------------------------------------------------------------
+classifiers <- readxl::read_xlsx(path = here::here("data/data.xlsx"), 
+                                 sheet = "Classifiers", 
+                                 skip = 1) %>% 
+  janitor::clean_names() 
 
 classifiers <- classifiers %>% 
   dplyr::select("gear_type", # "gear_type_condensed", 
@@ -798,148 +796,130 @@ dat_descr <- dplyr::bind_rows(dat_descr, dat_temp)
 # Create condensed affiliation categories -------------------------------------
 
 list0 <- list(
-
+  
   # Medical ---------------
   
-  "Medical" = c(find_words(where = dat_temp$val, word = c("hospital", "Medical"))), 
-
+  "Medical" = c(find_words(where = dat_temp$val, word = c("hospital", "Medical", "fred hutchinson cancer center"))), 
+  
   # Universities ---------------
-                                  
+  
   "Australian Universities" = 
     c(find_words(where = dat_temp$val, 
                  word = c("flinders university south australia" , "university of wollongong", "university of western australia", "university of canberra", "james cook university", "edith cowan university", "university of the sunshine coast", "university of queensland", "university of adelaide", "queensland university of technology",  "australian national university", "charles darwin university", "charles sturt university",  "deakin university" , "griffith university" , "southern cross university" , "macquarie university", "murdoch university","university of sydney", "university of tasmania", "university of technology sydney", "university of new south wales", "university of newcastle", "university of melbourne", "curtin university"))), 
   "Austrian Universities" = c(find_words(where = dat_temp$val, word = c("technische universitat wien"))), 
   "Argentinan Universities" = c(find_words(where = dat_temp$val, word = c("universidad de cordoba", "national university of mar del plata", "university of palermo", "university of buenos aires", "universidad nacional del comahue"))), 
-  "Belgium Universities" = c(find_words(where = dat_temp$val, word = c("universite libre de bruxelles", "ghent university" ))), 
-  "Brazilian Universities" = c(find_words(where = dat_temp$val, word = c("universidade federal rural de pernambuco", "universidade federal de alagoas", "universidade federal de pernambuco", "universidade federal de sergipe", "universidade federal do espirito santo", "universidade federal do para", "universidade federal do parana" , "universidade federal do rio grande", "universidade federal rural da amazonia (ufra)", "universidade federal rural de pernambuco (ufrpe)", "universidade de sao paulo"))),
+  "Belgium Universities" = c(find_words(where = dat_temp$val, word = c("ku leuven", "universite libre de bruxelles", "ghent university" ))), 
+  "Brazilian Universities" = c(find_words(where = dat_temp$val, word = c("universidade federal rural de pernambuco", "universidade federal de alagoas", "universidade federal de pernambuco", "universidade federal de sergipe", "universidade federal do espirito santo", "universidade federal do para", "universidade federal do parana" , "universidade federal do rio grande", "universidade federal rural da amazonia", "universidade federal rural de pernambuco (ufrpe)", "universidade de sao paulo"))),
   "Canadian Universities" = c(find_words(where = dat_temp$val, word = 
-                                           c("university of new brunswick", "university of manitoba","acadia university", "carleton university", "concordia university  canada", "bangor university", "dalhousie university", 
-                                             "queens university  canada", "nova southeastern university" , "laval university" , 
-                                             "mcgill university", "memorial university newfoundland" ,"vancouver island university", 
-                                             "university of toronto", "university of british columbia" , "universite de montreal", 
-                   "university of quebec", "university of guelph", "universite du quebec a rimouski", "simon fraser university", 
-                   "victoria university", "university toronto", "university of victoria"))), 
-
+c("university of new brunswick", "university of manitoba","acadia university", "carleton university", "concordia university  canada", "bangor university", "dalhousie university", "queens university  canada", "nova southeastern university" , "laval university", "mcgill university", "memorial university newfoundland" ,"vancouver island university", "university of toronto", "university of british columbia" , "universite de montreal", "university of quebec", "university of guelph", "universite du quebec a rimouski", "simon fraser university", "victoria university", "university toronto", "university of victoria"))), 
+  
   "Chinese Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("university of science & technology", "ningbo university", "university of hong kong", "zhejiang ocean university", "tianjin university" , "shaanxi normal university", "shandong university", "shanghai ocean university", "northwest university xi'an", "ocean university of china", "university of chinese academy of sciences", "guangxi university", "guiyang university","nanjing university of information science & technology", "nanning normal university", "chinese university of hong kong", "east china normal university", "dalian ocean university", "hong kong baptist university", "guangdong ocean university", "jimei university"  ))), 
-
-"Colombian Universities" = c(find_words(where = dat_temp$val, word = c("universidad nacional de colombia", "universidad del magdalena"))),
-"Chilean Universities" = c(find_words(where = dat_temp$val, word = c("universidad de los lagos", "universidad de concepcion", "universidad de antofagasta", "universidad austral de chile", "pontificia universidad catolica de chile" ))),
-
-"Cuban" = c(find_words(where = dat_temp$val, word = c("universidad de la habana"))),
- 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of science & technology", "ningbo university", "university of hong kong", "zhejiang ocean university", "tianjin university" , "shaanxi normal university", "shandong university", "shanghai ocean university", "northwest university xi'an", "ocean university of china", "university of chinese academy of sciences", "guangxi university", "guiyang university","nanjing university of information science & technology", "nanning normal university", "chinese university of hong kong", "east china normal university", "dalian ocean university", "hong kong baptist university", "guangdong ocean university", "jimei university"  ))), 
+  
+  "Colombian Universities" = c(find_words(where = dat_temp$val, word = c("universidad nacional de colombia", "universidad del magdalena"))),
+  "Chilean Universities" = c(find_words(where = dat_temp$val, word = c("universidad de los lagos", "universidad de concepcion", "universidad de antofagasta", "universidad austral de chile", "pontificia universidad catolica de chile" ))),
+  
+  "Cuban" = c(find_words(where = dat_temp$val, word = c("universidad de la habana"))),
+  
   "Czechia Universities" = c(find_words(where = dat_temp$val, word = c("university of south bohemia", "czech university of life sciences prague" ))), 
-"Denmark Universities" = c(find_words(where = dat_temp$val, word = c("aarhus university", "university of the faroe islands", "university of copenhagen", "roskilde university", "technical university of denmark"))),
+  "Denmark Universities" = c(find_words(where = dat_temp$val, word = c("aarhus university", "university of the faroe islands", "university of copenhagen", "roskilde university", "technical university of denmark"))),
+  "Ecuadorian Universities" = c(find_words(where = dat_temp$val, word = c("escuela superior politecnica del litoral"))),
   "Estonian Universities" = c(find_words(where = dat_temp$val, word = c("university of tartu", "tartu university"))),
   "Ethiopian Universities" = c(find_words(where = dat_temp$val, word = c("adama science & technology university", "bahir dar university", "addis ababa university"))),
-
+  
   "Fiji Universities" = c(find_words(where = dat_temp$val, word = c("university of the south pacific"))), 
   "Finnish Universities" = c(find_words(where = dat_temp$val, word = c("university of helsinki", "abo akademi university" ))), 
   "French Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("agroparistech", "university of la reunion", "universite des antilles", "universite paul valery", 
-                   "universite de bretagne occidentale", "universite de caen normandie", "aix marseille universite", 
-                   "universite de toulouse", "sorbonne universite" , "nantes universite", "institut universitaire europeen de la mer (iuem)", 
-                   "universite de montpellier", "universite de pau et des pays de l'adour", 
-                   "universite perpignan via domitia", "universite psl", "universite paris"))), 
+    c(find_words(where = dat_temp$val, word = 
+                   c("agroparistech", "university of la reunion", "universite des antilles", "mines paristech", "universite paul valery", "universite de bretagne occidentale", "universite de caen normandie", "aix marseille universite", "universite de toulouse", "sorbonne universite" , "nantes universite", "institut universitaire europeen de la mer (iuem)", "ecole pratique des hautes etudes", "universite de montpellier", "universite de pau et des pays de l'adour", "ensta bretagne", "universite perpignan via domitia", "universite psl", "universite paris"))), 
   "German Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("university of munich", "university of kiel", "university of hamburg", "jacobs university", "free university of berlin" ,
-                   "university of bielefeld", "saarland university", "leipzig university", "humboldt university of berlin", "bremen university of applied sciences" , 
-                   "university of duisburg essen", "university of bremen", "braunschweig university of technology"))), 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of munich", "university of kiel", "university of hamburg", "jacobs university", "free university of berlin" ,
+                     "university of bielefeld", "saarland university", "leipzig university", "humboldt university of berlin", "bremen university of applied sciences" , 
+                     "university of duisburg essen", "university of bremen", "braunschweig university of technology"))), 
   "Ghana Universities" = c(find_words(where = dat_temp$val, word = c("university of cape coast"))), 
   "Greek Universities" = 
-  c(find_words(where = dat_temp$val, word = c("university of crete", "western greece university", "national & kapodistrian university of athens", 
-                                              "university of thessaly", "university of patras", "university of aegean", "aristotle university of thessaloniki"))), 
+    c(find_words(where = dat_temp$val, word = c("university of crete", "western greece university", "national & kapodistrian university of athens", 
+                                                "university of thessaly", "university of patras", "university of aegean", "aristotle university of thessaloniki"))), 
   "Icelandic Universities" = c(find_words(where = dat_temp$val, word = c("university of iceland"))), 
   "Italian Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("university of trieste", "university of sassari", "university of siena", "sapienza university rome", 
-                   "universita ca foscari venezia", "university of bologna", "tuscia university", 
-                   "universita degli studi di bari aldo moro", "universita lumsa", "university of cagliari", 
-                   "university of rome tor vergata", "university of padua", "university of florence", "university of genoa"))), 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of trieste", "university of sassari", "university of siena", "sapienza university rome", 
+                     "universita ca foscari venezia", "university of bologna", "tuscia university", 
+                     "universita degli studi di bari aldo moro", "universita lumsa", "university of cagliari", 
+                     "university of rome tor vergata", "university of padua", "university of florence", "university of genoa"))), 
   "Indonesian Universities" = c(find_words(where = dat_temp$val, word = c("brawijaya university"))), 
   "Indian Universities" = c(find_words(where = dat_temp$val, word = c("kerala university of fisheries & ocean studies"))), 
   "Iran Universities" = c(find_words(where = dat_temp$val, word = c("university of tehran", "gorgan university of agricultural sciences & natural resources"))), 
   "Irish Universities" = c(find_words(where = dat_temp$val, word = c("university college cork", "ollscoil na gaillimhe university of galway"))), 
   "Jamaica Universities" = c(find_words(where = dat_temp$val, word = c("university west indies"))), 
-  "Japanese Universities" = c(find_words(where = dat_temp$val, word = c("university of tokyo", "nagasaki university" , "kyoto university", "konan university" , "hokkaido university", "university of the ryukyus", "tokyo university", "tokushima bunri university", "tokai university", "mie university", "ehime university", "kyushu university" ))), 
+  "Japanese Universities" = c(find_words(where = dat_temp$val, word = c("university of tokyo", "nagasaki university" , "kyoto university", "konan university" , "hokkaido university", "university of the ryukyus", "tokyo university", "tokushima bunri university", "tokai university", "okinawa institute of science & technology graduate university", "mie university", "ehime university", "kyushu university" ))), 
   "Kenyan Universities" = c(find_words(where = dat_temp$val, word = c("university of nairobi", "pwani university", "keio university" ))), 
-
-
-"Latvian Universities" = c(find_words(where = dat_temp$val, word = c("university of latvia"))), 
+  "Latvian Universities" = c(find_words(where = dat_temp$val, word = c("university of latvia"))), 
   "Malaysian Universities" = c(find_words(where = dat_temp$val, word = c("university of nottingham malaysia", "universiti malaya"))), 
   "Mexican Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("universidad nacional autonoma de mexico", "universidad veracruzana", "universidad autonoma de baja california", 
-                   "universidad de guadalajara", "universidad autonoma de sinaloa"))), 
+    c(find_words(where = dat_temp$val, word = 
+                   c("universidad nacional autonoma de mexico", "universidad veracruzana", "el colegio de la frontera sur", "ecosur", "universidad autonoma de baja california", "instituto politecnico nacional  mexico", 
+                     "universidad de guadalajara", "universidad autonoma de sinaloa"))), 
   "Moroccan Universities" = c(find_words(where = dat_temp$val, word = c("cadi ayyad university of marrakech"))), 
   "New Zealand Universities" = c(find_words(where = dat_temp$val, word = c("university of waikato", "university of otago", "university of canterbury", "university of auckland", "massey university"))),
   "Netherlands Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("utrecht university", "vrije universiteit", "wageningen university", "University of Groningen"))), 
-"Northern Ireland" = c(find_words(where = dat_temp$val, word = c("ulster university", "queens university belfast" ))), 
-"Norwegian Universities" = c(find_words(where = dat_temp$val, word = c("university of oslo", "university of bergen", "university of agder", "uit the arctic university of tromso", "nord university"))), 
+    c(find_words(where = dat_temp$val, word = 
+                   c("utrecht university", "vrije universiteit", "wageningen university", "University of Groningen"))), 
+  "Northern Ireland" = c(find_words(where = dat_temp$val, word = c("ulster university", "queens university belfast" ))), 
+  "Norwegian Universities" = c(find_words(where = dat_temp$val, word = c("university of oslo", "university of bergen", "university of agder", "uit the arctic university of tromso", "nord university"))), 
   "Nigeria Universities" = c(find_words(where = dat_temp$val, word = c("university of ibadan"))), 
   "Pakistan Universities" = c(find_words(where = dat_temp$val, word = c("university of karachi", "government college university faisalabad"))), 
   "Peru Universities" = c(find_words(where = dat_temp$val, word = c("universidad nacional federico villarreal"))), 
   "Polish Universities" = c(find_words(where = dat_temp$val, word = c("wroclaw university"))),
   "Portugal Universities" = c(find_words(where = dat_temp$val, word = 
-                                           c("universidade dos acores", "universidade de coimbra", "universidade do porto", 
-                                             "universidade de aveiro", "university of tras os montes & alto douro", 
-                                             "universidade do algarve", "universidade de lisboa" ))), 
+c("universidade dos acores", "universidade de coimbra", "universidade do porto", "universidade de aveiro", "university of tras os montes & alto douro", "universidade do algarve", "universidade de lisboa" ))), 
   "Philippine Universities" = c(find_words(where = dat_temp$val, word = c("silliman university"))),
-
+  
   "Senegal Universities" = c(find_words(where = dat_temp$val, word = c("university cheikh anta diop dakar", "universite gaston berger"))), 
   "Scotland Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("university of gothenburg", "university of edinburgh", "university of st andrews", 
-                   "university of aberdeen", "uhi millennium institute" , "heriot watt university", 
-                   "university of stirling", "university of glasgow", "university of strathclyde"))),
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of gothenburg", "university of edinburgh", "university of st andrews", "university of aberdeen", "uhi millennium institute" , "heriot watt university", "university of stirling", "university of glasgow", "university of strathclyde"))),
   "Spanish Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("university of valencia", "university of basque country", "universitat de les illes balears" , "university of murcia", 
-                   "universidade de santiago de compostela", "universidade da coruna", "complutense university of madrid" , 
-                   "universitat politecnica de catalunya", "universidade de vigo", "universidad de huelva", 
-                   "universidad rey juan carlos", "universidad de las palmas de gran canaria", "universidad de cadiz" , 
-                   "university of barcelona", "universitat d'alacant", "universitat de girona"))), 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of valencia", "university of basque country", "universitat de les illes balears" , "university of murcia", "universidade de santiago de compostela", "universidade da coruna","complutense university of madrid" ,"universitat politecnica de catalunya", "universidade de vigo", "universidad de huelva", "universidad rey juan carlos", "universidad de las palmas de gran canaria", "universidad de cadiz", "university of barcelona", "universitat d'alacant", "universitat de girona"))), 
   "South Africa Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("university of the western cape", "university of kwazulu natal", "university of cape town", "rhodes university", "nelson mandela university"))), 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of the western cape", "university of kwazulu natal", "university of cape town", "rhodes university", "nelson mandela university"))), 
   "South Korean Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("sunchon national university", "hanyang university", "seoul national university", "myongji university", 
-                   "pukyong national university", "jeju national university", "inha university"))), 
-
+    c(find_words(where = dat_temp$val, word = 
+                   c("sunchon national university", "hanyang university", "seoul national university", "myongji university", 
+                     "pukyong national university", "jeju national university", "inha university"))), 
+  
   "Saudi Arabian Universities" = c(find_words(where = dat_temp$val, word = c("king abdullah university of science & technology" , "king fahd university of petroleum & minerals", "king saud university" ))),
-
+  
   "Swedish Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("university of gothenburg", "stockholm university", "swedish university of agricultural sciences", "linnaeus university"))), 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of gothenburg", "stockholm university", "swedish university of agricultural sciences", "linnaeus university"))), 
   "Switzerland Universities" = c(find_words(where = dat_temp$val, word = c("university of zurich", "university of bern", "university of basel"))),
   "Tanzania Universities" = c(find_words(where = dat_temp$val, word = c("university of dar es salaam"))),
   "Taiwan Universities" = c(find_words(where = dat_temp$val, word = c("national dong hwa university", "national taipei university of technology", "national taiwan ocean university", "national taiwan university", "national sun yat sen university"))),
-"Tunisian Universities" = c(find_words(where = dat_temp$val, word = c("universite de sfax", "universite de tunis el manar"))),
-"Turkish Universities" = c(find_words(where = dat_temp$val, word = c("giresun university", "recep tayyip erdogan university", "middle east technical university", "mersin university", "antalya bilim university" ))),
-"Thai Universities" = c(find_words(where = dat_temp$val, word = c("kasetsart university"))),
-"Uruguay Universities" = c(find_words(where = dat_temp$val, word = c("universidad de la republica, uruguay"))),
-"United Arab Emirates" = c(find_words(where = dat_temp$val, word = c("united arab emirates university"))),
+  "Tunisian Universities" = c(find_words(where = dat_temp$val, word = c("universite de sfax", "universite de tunis el manar", "faculte des sciences de tunis"))),
+  "Turkish Universities" = c(find_words(where = dat_temp$val, word = c("giresun university", "recep tayyip erdogan university", "middle east technical university", "mersin university", "antalya bilim university" ))),
+  "Thai Universities" = c(find_words(where = dat_temp$val, word = c("kasetsart university"))),
+  "Uruguay Universities" = c(find_words(where = dat_temp$val, word = c("universidad de la republica, uruguay"))),
+  "United Arab Emirates" = c(find_words(where = dat_temp$val, word = c("united arab emirates university"))),
   "UK Universities" = 
-  c(find_words(where = dat_temp$val, word = 
-                 c("aberystwyth university", "university of york", "university of westminster", "royal holloway university",
-                   "university of oxford", "university of salford", "university of exeter", "loughborough university", 
-                   "university of east anglia", "university of cambridge", "university of bath", "lancaster university", 
-                   "university of leeds", "university of liverpool", "university of london", "swansea university", "bournemouth university", 
-                   "university of hull", "university of kent", "university of bristol", "newcastle university", 
-                   "university of sussex", "university of southampton", "university of sheffield"))),
-# "Uruguay Universities" = c(find_words(where = dat_temp$val, word = c("universidad de la republica, uruguay"))),
-
-
-
+    c(find_words(where = dat_temp$val, word = 
+                   c("aberystwyth university", "university of york", "university of westminster", "royal holloway university",
+                     "university of oxford", "university of salford", "university of exeter", "loughborough university", 
+                     "university of east anglia", "university of cambridge", "university of bath", "lancaster university", 
+                     "university of leeds", "university of liverpool", "university of london", "swansea university", "bournemouth university", 
+                     "university of hull", "university of kent", "university of bristol", "newcastle university", 
+                     "university of sussex", "university of southampton", "university of sheffield"))),
+  # "Uruguay Universities" = c(find_words(where = dat_temp$val, word = c("universidad de la republica, uruguay"))),
+  
+  
+  
   "Virgin Islands Universities" = c(find_words(where = dat_temp$val, word = c("university of the virgin islands"))), 
-
-
+  
+  
   # United States -------------
   "NOAA" = c(find_words(where = dat_temp$val, word = c("National Oceanic and Atmospheric Administration", "NOAA"))), 
   "US Government" = c(find_words(where = dat_temp$val, word = c("US Government", "us ", "U.S.", "usa", "united states ", 
@@ -948,32 +928,15 @@ list0 <- list(
   "US Universities" = 
     c(find_words(where = dat_temp$val, word = 
                    c(#"Universi", "College", 
-                     "virginia polytechnic institute & state university", "university of rhode island", 
-                     "university of pennsylvania", "university of san diego", "occidental college", "california state polytechnic university", 
-                     "university of puerto rico", "university of north carolina", "university of north florida", 
-                     "washington state university", "widener university", "university of plymouth",  
-                     "florida institute of technology", "university of toledo", "murray state university", 
-                     "gulf of maine research institute", "illinois natural history survey", 
-                     "william & mary", "woods hole oceanographic institution", "university of puerto rico", "wellesley college", "smith college", 
-                     "monterey bay aquarium research institute", "massachusetts institute of technology", "talladega college", 
-                     "virginia institute of marine science", "suny cobleskill", "scripps", "atlantic technological university", "auburn university", "boston university", "ball state university", "california polytechnic state university", "california state university", "central connecticut state university", "clemson university", "colorado state university", "columbia university", "connecticut state university", "cornell university", "central michigan university", "duke university", "east carolina university", "florida atlantic university", "florida gulf coast university", "florida international university" , "florida state university", "george mason university", "harvard university", "idaho state university", "indiana university", "jacksonville university", "kansas state university" , 
-                     "skidaway institute of oceanography", "university of south alabama", "tulane university",
-                     "university of washington", "university of west florida", "university of wisconsin", 
-                     "university system of georgia", "university system of maryland", "university of birmingham",
-                     "university system of new hampshire", "university system of ohio", "stockton university", 
-                     "university of texas", "university of tampa", "university of southern california", "san diego state university", 
-                     "university of southern maine", "university of southern mississippi", "northeastern university", "old dominion university", "louisiana state university", "michigan state university", "michigan technological university", "mississippi state university", "monmouth university", "montana state university", 
-                     "university of new england", "university of new hampshire", "university of new mexico", "university of new orleans", "university of nevada", "university of miami", "university of michigan", "university of minnesota", "university of missouri", "university of montana", "university of massachusetts", "university of maryland", "university of maine", "university of idaho", "university of illinois", "university of iowa", "university of kansas", "university of hawaii", "university of guam", "university of georgia", "university of florida", "university of delaware", "university of colorado", "university of connecticut", "university of central florida", "university of louisiana", "university of louisville", "university of california", "university hawaii", "university massachusetts", "texas a&m university", "texas state university", "texas tech university", "state university of new york", "state university system of florida", "stanford university", "sam houston state university", "rutgers university", "princeton university", "purdue university", "south dakota state university", "savannah state university", "ohio state university", "oregon state university", "pennsylvania state university", "portland state university","oklahoma state university", "northern kentucky university", "north carolina state university", "new mexico state university", "university of alaska", "university of alaska", 
-                     "university of south carolina", "university of south carolina", "university of south florida" ))), 
-
+                     "virginia polytechnic institute & state university", "university of rhode island", "university of pennsylvania", "harvard", "university of san diego", "occidental college", "california state polytechnic university", "university of puerto rico", "university of north carolina", "university of north florida", "washington state university", "widener university", "university of plymouth",  "new college florida", "florida institute of technology", "university of toledo", "murray state university", "gulf of maine research institute", "william & mary", "woods hole oceanographic institution", "university of puerto rico", "wellesley college", "smith college", "monterey bay aquarium research institute", "massachusetts institute of technology", "talladega college", "virginia institute of marine science", "suny cobleskill", "scripps", "atlantic technological university", "auburn university", "boston university", "ball state university", "california polytechnic state university", "california state university", "central connecticut state university", "clemson university", "colorado state university", "columbia university", "connecticut state university", "cornell university", "central michigan university", "duke university", "east carolina university", "florida atlantic university", "florida gulf coast university", "florida international university" , "florida state university", "george mason university", "harvard university", "idaho state university", "indiana university", "jacksonville university", "kansas state university", "skidaway institute of oceanography", "university of south alabama", "tulane university", "university of washington", "university of west florida", "university of wisconsin", "university system of georgia", "dartmouth college",  "university system of maryland", "university of birmingham", "university system of new hampshire", "university system of ohio", "stockton university", "university of texas", "university of tampa", "university of southern california", "san diego state university", "university of southern maine", "college of charleston", "university of southern mississippi", "northeastern university", "old dominion university", "louisiana state university", "michigan state university", "michigan technological university", "mississippi state university", "monmouth university", "montana state university", "university of new england", "university of new hampshire", "university of new mexico", "university of new orleans", "university of nevada", "university of miami", "university of michigan", "university of minnesota", "university of missouri", "university of montana", "university of massachusetts", "university of maryland", "university of maine", "university of idaho", "university of illinois", "university of iowa", "university of kansas", "university of hawaii", "university of guam", "university of georgia", "university of florida", "university of delaware", "university of colorado", "university of connecticut", "university of central florida", "university of louisiana", "university of louisville", "university of california", "rensselaer polytechnic institute", "university hawaii", "university massachusetts", "texas a&m university", "texas state university", "texas tech university", "state university of new york", "state university system of florida", "stanford university", "sam houston state university", "rutgers university", "princeton university", "california institute of technology", "purdue university", "south dakota state university", "savannah state university", "ohio state university", "oregon state university", "pennsylvania state university", "portland state university","oklahoma state university", "northern kentucky university", "north carolina state university", "new mexico state university", "university of alaska", "university of alaska", "university of south carolina", "university of south carolina", "university of south florida" ))), 
+  
   "US State Government" = 
     c(find_words(where = dat_temp$val, word = 
-                   c("Alaska Department of Fish ", "massachusetts division of marine fisheries", "adfg", "washington department of fish & wildlife", "wdfw", "national centers for coastal ocean science", "minnesota department of natural resources", 
-                     "southern california coastal water research project", "florida fish & wildlife conservation commission"))), 
+                   c("Alaska Department of Fish ", "massachusetts division of marine fisheries", "adfg", "washington department of fish & wildlife", "wdfw", "national centers for coastal ocean science", "minnesota department of natural resources", "illinois natural history survey", "southern california coastal water research project", "florida fish & wildlife conservation commission"))), 
   
   "US Research Societies and Institutes" = 
     c(find_words(where = dat_temp$val, word = 
-                   c("mote marine laboratory & aquarium", "moss landing marine laboratories"))), 
+                   c("mote marine laboratory & aquarium", "moss landing marine laboratories", "nerc national oceanography centre", "naval research laboratory", "national center for ecological analysis & synthesis", "harbor branch oceanographic institute foundation"))), 
   
   "US Museums and Education" = 
     c(find_words(where = dat_temp$val, word = 
@@ -981,108 +944,121 @@ list0 <- list(
                      "nevada system of higher education", 
                      "pennsylvania commonwealth system of higher education"))),
   
-
-
+  
+  
   "Australian Government" = 
     c(find_words(where = dat_temp$val, 
-                 word = c("Australia", "csiro", "antarctic climate & ecosystems cooperative research centre", "nsw department of primary industries", 
-                          "melbourne", "sydney", "department of economic development, jobs, transport & resources, department of environment", 
-                          "arc centre of excellence for coral reef studies", "queensland"))), 
+                 word = c("Australia", "csiro", "antarctic climate & ecosystems cooperative research centre", "sa water", "nsw department of primary industries", "victorian department of environment & primary industries", "melbourne", "sydney", "department of economic development, jobs, transport & resources, department of environment", "department of economic development, jobs, transport & resources", "arc centre of excellence for coral reef studies", "department for environment & water", "queensland"))), 
   # "Australian Museums and Education" = c(find_words(where = dat_temp$val, word = c("california academy of sciences"))),
   
   "Austrian Government" = c(find_words(where = dat_temp$val, word = c("university of vienna"))),
-  "Argentinian Government" = c(find_words(where = dat_temp$val, word = c("consejo nacional de investigaciones cientificas y tecnicas", 
-                                                                         "national fisheries research & development institute (inidep)"))),
-
+  "Argentinian Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("national fisheries research & development institute", "instituto antartico argentino", "instituto de astronomia y fisica del espacio"))), 
+  "Argentinian Government" = c(find_words(where = dat_temp$val, word = c("consejo nacional de investigaciones cientificas y tecnicas", "centro nacional patagonico", "cenpat", "national fisheries research & development institute (inidep)"))),
+  
   "Azerbaijan Government" = c(find_words(where = dat_temp$val, word = c("azerbaijan"))),
-  "Bulgarian Government" = c(find_words(where = dat_temp$val, word = c("bulgaria"))),
+  # "Bulgarian Government" = c(find_words(where = dat_temp$val, word = c("bulgaria"))),
   "Canadian Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("bedford institute of oceanography"))), 
-  "Canadian Government" = c(find_words(where = dat_temp$val, word = c("Canada", "Canadian", "ministry of natural resources"))), 
-
-
+  "Canadian Government" = c(find_words(where = dat_temp$val, word = c(#"Canada", "Canadian",
+    "ministry of natural resources"))), 
+  
+  "Chilean Research Societies and Institutes" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("instituto de fomento pesquero"))), 
   "Chinese Research Societies and Institutes" = 
     c(find_words(where = dat_temp$val, word = 
-                   c("kunming institute of zoology"))),
-  "Chinese Government" = 
-    c(find_words(where = dat_temp$val, word = 
-                   c("china", "beijing", "yangtze river", "chinese", "pearl river", "guangzhou", 
-                     "yellow sea", "laoshan laboratory", "guangdong", "ministry of agriculture & rural affairs"))),
-
-  "Croatian Government" = c(find_words(where = dat_temp$val, word = c("croatian"))),
-
-  "Czechia Government" = c(find_words(where = dat_temp$val, word = c("czech"))),
-
-  "Denmark Government" = c(find_words(where = dat_temp$val, word = c("greenland", "faroe", "denmark"))),
-  "Finnish Government" = c(find_words(where = dat_temp$val, word = c("finland", "finnish"))),
-
-  "French Government" = c(find_words(where = dat_temp$val, word = c("office francais de la biodiversite", "ofb"))),
+                   c("chengdu institute", "kunming institute of zoology", "national engineering research center for oceanic fisheries", "fishery machinery & instrument research institute", "institute of geochemistry, cas", "institute of hydrobiology, cas", "institute of oceanology, cas"))),
+  # "Chinese Government" = 
+  #   c(find_words(where = dat_temp$val, word = 
+  #                  c("china", "beijing", "yangtze river", "chinese", "pearl river", "guangzhou", "yellow sea", "laoshan laboratory", "guangdong", "ministry of agriculture & rural affairs"))),
+  
+  # "Croatian Government" = c(find_words(where = dat_temp$val, word = c("croatian"))),
+  
+  # "Czechia Government" = c(find_words(where = dat_temp$val, word = c("czech"))),
+  
+  # "Denmark Government" = c(find_words(where = dat_temp$val, word = c("greenland", "faroe", "denmark"))),
+  # "Finnish Government" = c(find_words(where = dat_temp$val, word = c("finland", "finnish"))),
   "French Museums and Education" = 
     c(find_words(where = dat_temp$val, word = 
-                   c("museum national d'histoire naturelle"))), 
+                   c("museum national d'histoire naturelle"))),   
+  "French Research Societies and Institutes" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("cnrs", "cirad", "institut universitaire europeen de la mer", "institut agro", "institut de recherche pour le developpement", "ifremer", "national institute for earth sciences & astronomy", "inria",  "inrae", "institut national des sciences et technologies de la mer"))), 
+
+  "French Government" = c(find_words(where = dat_temp$val, word = c("office francais de la biodiversite", "ofb"))),
+
   "German Research Societies and Institutes" = 
     c(find_words(where = dat_temp$val, word = 
-                   c("senckenberg gesellschaft fur naturforschung", "leibniz zentrum fur marine tropenforschung", 
-                     "leibniz institut fur gewasserokologie und binnenfischerei", 
-                     "johann heinrich von thunen institute", "helmholtz zentrum hereon"))),
-  "German Government" = 
+                   c("senckenberg gesellschaft fur naturforschung", "leibniz zentrum fur marine tropenforschung", "leibniz institut", "johann heinrich von thunen institute", "helmholtz zentrum hereon", "helmholtz association"))),
+  "German Research Societies and Institutes" = 
     c(find_words(where = dat_temp$val, word = 
-                   c("alfred wegener institute", "helmholtz centre for polar & marine research"))),
-  # "Greek Government" = 
-  #   c(find_words(where = dat_temp$val, word = 
-  #                  c(""))),
+                   c("alfred wegener institute", "helmholtz"))),
+  "Greek Government" =
+    c(find_words(where = dat_temp$val, word =
+                   c("hellenic centre for marine research"))),
+  "Icelandic Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("marine & freshwater research institute"))), 
+  "Indonesian Government" = c(find_words(where = dat_temp$val, word = c("ministry of marine affairs and fisheries"))), 
+  "Indian Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("tata institute of fundamental research", "centre for marine living resources & ecology", "cmlre", "central marine fisheries research institute", "national centre for biological sciences", "central coastal agricultural research institute"))), 
   "Indian Government" = c(find_words(where = dat_temp$val, word = c("India"))), 
-  "Indian Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("tata institute of fundamental research"))), 
-  "Ireland Government" = c(find_words(where = dat_temp$val, word = c("agri food & biosciences institute"))),
-  "Italian Government" = c(find_words(where = dat_temp$val, word = c("napoli", "italy"))),
-  "Jamaica Government" = c(find_words(where = dat_temp$val, word = c("Jamaica"))), 
-  "Japanese Government" = c(find_words(where = dat_temp$val, word = c("Japan"))), 
-  "Korea Government" = c(find_words(where = dat_temp$val, word = c("korea"))),
+  "Irish Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("marine institute ireland"))),
+  "Irish Government" = c(find_words(where = dat_temp$val, word = c("agri food & biosciences institute"))),
+  "Italian Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c(
+    "istituto di neuroscienze", "istituto di scienze marine", "istituto di studi sul mediterraneo", "istituto nazionale di oceanografia e di geofisica sperimentale", "istituto per le risorse biologiche biotecnologie marine", "consiglio per la ricerca in agricoltura e l'analisi dell'economia agraria (crea)", "istituto per lo studio degli impatti antropici sostenibilita in ambiente marino", "consiglio per la ricerca in agricoltura e l'analisi dell'economia agraria", "italian institute for environmental protection & research", "l'istituto per l'ambiente marino costiero", "italian institute for environmental protection & research", "istituto per le risorse biologiche biotecnologie marine", "consiglio nazionale delle ricerche", "l'istituto per l'ambiente marino costiero", "ec jrc ispra site", "conisma"))),
+  # "Italian Government" = c(find_words(where = dat_temp$val, word = c("napoli", "italy"))),
+  # "Jamaica Government" = c(find_words(where = dat_temp$val, word = c("Jamaica"))), 
+  "Japanese Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("research organization of information & systems", "national institute of advanced industrial science & technology"))), 
+  # "Japanese Government" = c(find_words(where = dat_temp$val, word = c("Japan"))), 
   "Latvia Government" = c(find_words(where = dat_temp$val, word = c("animal health & environment bior"))),
-  "Lithuania Government" = c(find_words(where = dat_temp$val, word = c("lithuania"))),
+  # "Lithuania Government" = c(find_words(where = dat_temp$val, word = c("lithuania"))),
+  "Mexican Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("centro de investigaciones biologicas del noroeste", "cibnor", "cicese  centro de investigacion cientifica y de educacion superior de ensenada", "centro de investigacion en alimentacion y desarrollo"))),
+  "Mongolian Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("mongolian academy of sciences"))), 
   "New Zealand Government" = c(find_words(where = dat_temp$val, word = c("new zealand"))),
-  "Netherlands Government" = c(find_words(where = dat_temp$val, word = c("netherlands", "holland"))),
-  "Norwegian Government" = c(find_words(where = dat_temp$val, word = c("Norwegian", "norway", "bjerknes centre for climate research"))), 
-  "Polish Government" = c(find_words(where = dat_temp$val, word = c("poland", "polish"))),
+  # "Netherlands Museums and Education" = c(find_words(where = dat_temp$val, word = c("netherlands", "holland"))),
+  "Netherlands Government" = c(find_words(where = dat_temp$val, word = c("naturalis biodiversity center"))),  
+  "Norwegian Government" = c(find_words(where = dat_temp$val, word = c(#"Norwegian", "norway",
+    "bjerknes centre for climate research"))),
+  "Peruvian Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("instituto del mar del peru"))),
+  "Portuguese Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("instituto de telecomunicacoes", "instituto superior psicologia aplicada"))),
+  "Polish Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("national marine fisheries research institute"))),
+  # "Polish Government" = c(find_words(where = dat_temp$val, word = c("poland", "polish"))),
   "Romania Government" = c(find_words(where = dat_temp$val, word = c("national institute for marine research & development grigore antipa"))),
-  "Russian Government" = c(find_words(where = dat_temp$val, word = c("Russia", "baikal", "Shirshov", "tinro", "papanin institute for biology of inland waters"))), 
+  "Russian Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("research lnstitute of fisheries & oceanography", "tinro", "papanin institute for biology of inland waters"))), 
+  # "Russian Government" = c(find_words(where = dat_temp$val, word = c("Russia", "baikal", "Shirshov"))), 
   "Scotland Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("james hutton institute", "marine scotland science"))),
-  "South African Government" = c(find_words(where = dat_temp$val, word = c("south africa"))),
-  "Spain Government" = c(find_words(where = dat_temp$val, word = c("csic", "centro mediterraneo de investigaciones marinas y ambientales", "cmima", "spanish"))), 
-  "Switzerland Government" = c(find_words(where = dat_temp$val, word = c("zurich", "Switzerland"))),
-  "Sweden Government" = c(find_words(where = dat_temp$val, word = c("Sweden", "Swiss", "swedish"))),
+  # "South African Government" = c(find_words(where = dat_temp$val, word = c("south africa"))),
+  "South Korea Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("national institute of fisheries science"))),
+  # "South Korea Government" = c(find_words(where = dat_temp$val, word = c("korea"))),  
+  "Spanish Government" = c(find_words(where = dat_temp$val, word = c("csic", "centro mediterraneo de investigaciones marinas y ambientales", "cmima", "spanish"))), 
+  # "Switzerland Government" = c(find_words(where = dat_temp$val, word = c("zurich", "Switzerland"))),
+  "Swedish Government" = c(find_words(where = dat_temp$val, word = c("beijer institute of ecological economics", "swedish meteorological & hydrological institute"))),
+  "Swedish Museums and Education" = c(find_words(where = dat_temp$val, word = c("swedish museum of natural history"))),
   "Taiwan Museums and Education" = c(find_words(where = dat_temp$val, word = c("national museum of marine biology & aquarium"))),
   "Taiwan Government" = c(find_words(where = dat_temp$val, word = c("taiwan"))),
-  "UK Government" = c(find_words(where = dat_temp$val, word = c("UK", "U.K.", "united kingdom", "london", "british"))),
-  # "blank Government" = c(find_words(where = dat_temp$val, word = c("blank", "blank"))),
-  # "blank Government" = c(find_words(where = dat_temp$val, word = c("blank", "blank"))),
-  # "blank Government" = c(find_words(where = dat_temp$val, word = c("blank", "blank"))),
-  # "blank Government" = c(find_words(where = dat_temp$val, word = c("blank", "blank"))),
-  # "blank Government" = c(find_words(where = dat_temp$val, word = c("blank", "blank"))),
-  # "blank Government" = c(find_words(where = dat_temp$val, word = c("blank", "blank"))),
-  # "blank Government" = c(find_words(where = dat_temp$val, word = c("blank", "blank"))),
-  # "blank Government" = c(find_words(where = dat_temp$val, word = c("blank", "blank"))),
+  "UK Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("natural environment research council", "institute of biological, environmental, rural & sciences",  "ibers", "biotechnology and biological sciences research council", "centre for environment fisheries & aquaculture science", "zoological society of london", "uk research & innovation", "ukri"))),
+  # "UK Government" = c(find_words(where = dat_temp$val, word = c("UK", "U.K.", "united kingdom", "london", "british"))),
   
   "Not-for-Profit" = 
     c(find_words(where = dat_temp$val, 
-                 word = c("deltares", "bigelow laboratory for ocean sciences", "national geographic society", 
-                          "nature conservancy", "wildlife conservation society", 
-                          "world wildlife fund", "worldfish"))),
+                 word = c("deltares", "bigelow laboratory for ocean sciences", "national geographic society", "battelle memorial institute", "plymouth marine laboratory", "national academies of sciences", "nature conservancy", "wildlife conservation society", "environmental defense fund", "national council for air & stream improvement", "cgiar", "world wildlife fund", "worldfish"))),
   "Private Data and Research Consulting" = 
     c(find_words(where = dat_temp$val, word = 
                    c("western ecosystems technology, inc."))),  
   "Private Food Industry" = 
     c(find_words(where = dat_temp$val, word = 
                    c("ajinomoto co inc", "suntory holdings"))),  
-  "Private Saftey Industry" = 
+  "Private Saftey and Security Industry" = 
     c(find_words(where = dat_temp$val, word = 
-                   c("consolidated safety services, inc."))),  
-  "Private Industry:" = 
+                   c("consolidated safety services, inc.", "l3harris technologies", "johnson controls incorporated"))),  
+  "Private Industry" = 
     c(find_words(where = dat_temp$val, 
                  word = c("Shell", "dupont", "telefonica sa", 
                           "weyerhaeuser company"))),
+  "Private Research and Consulting" = 
+    c(find_words(where = dat_temp$val, 
+                 word = c("industrial economics, incorporated", "ic independent consulting", "earth resources technology inc", "fishwell consulting"))),
+
   "International governance" = 
     c(find_words(where = dat_temp$val, word = 
-                   c("The World Bank", "european commission joint research centre"))))
+                   c("The World Bank", "european commission joint research centre", "azti", "food & agriculture organization of the united nations", "fao"))))
 
 aaa <- data_condense(dat_descr, variable = "affiliations", list0, list_as_is = TRUE)
 
@@ -1357,6 +1333,14 @@ for (var0 in temp){
 ```
 
 `r paste(knitr::knit(text = unlist(src)), collapse = '\n')`
+
+
+```{r}
+
+
+
+
+```
 
 # R Version Metadata
 
