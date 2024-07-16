@@ -1,0 +1,1428 @@
+---
+title: "Publication Plots"
+editor: source
+author:
+  - name: Emily Markowitz
+    orcid: 0000-0001-5757-4230
+    email: Emily.Markowitz@noaa.gov 
+    note: https://github.com/afsc-gap-products
+    affiliations:
+      - name: NOAA Fisheres Alaska Fisheries Science Center
+    department: Groundfish Assessment Program, Bering Sea Survey Team
+  - name: Catherine Foley
+    orcid: 0000-0003-3664-074X
+    email: Catherine.Foley@noaa.gov 
+    note: https://github.com/noaa-nefsc
+    affiliations:
+      - name: NOAA Fisheres Northeast Fisheries Science Center
+department: Ecosystem Surveys Branch, Bottom Trawl Survey Program
+date: "`r paste0('DRAFT: ', format(Sys.time(), '%B %d, %Y'))`"
+format: html
+toc: true
+toc-location: right
+toc-depth: 3
+number-sections: true
+message: FALSE
+warning: FALSE
+error: FALSE
+comment: FALSE
+echo: FALSE
+fig-height: 6
+fig-width: 6
+---
+
+```{r setup}
+knitr::opts_chunk$set(
+  echo = FALSE, warning = FALSE, error = FALSE, message = FALSE, 
+  tab.cap.style = "Table Caption", 
+  tab.cap.pre = "Table", 
+  tab.cap.sep = ". --", 
+  fig.cap.style = "Image Caption",
+  fig.cap.pre = "Figure ", 
+  fig.cap.sep = ". -- ", 
+  fig.align = 'center')
+```
+
+```{r load-libraries, include = FALSE}
+PKG <- c("devtools", "googledrive", "ggplot2", 
+         "magrittr", "here", "dplyr", "sf", "readxl", 
+         "janitor", "stringr")
+for (p in PKG) {
+  if(!require(p,character.only = TRUE)) {  
+    install.packages(p, verbose = FALSE)
+    require(p,character.only = TRUE)}
+}
+```
+
+
+# Data Wrangling
+
+
+```{r data-wrangle-fncts}
+# Category condense function ---------------------------------------------------
+data_condense <- function(dat_descr, variable, list0, list_as_is = FALSE, append = "_condensed"){
+  if (!list_as_is) {
+    names(list0) <- stringr::str_to_sentence(names(list0))
+  }
+  list00<-list0
+  for (i in 1:length(list0)){
+    list00[[i]] <- paste0('c(', paste0('"', list00[[i]], '"', collapse = ', '), ')')
+  }
+  
+  eval(parse(text=
+               paste0('dat_temp <- dat_descr %>%
+    dplyr::filter(var == "',variable,'" & !is.na(val)) %>%
+    dplyr::mutate(
+      val0 = val,
+      var = paste0("',variable, append,'"),
+val = dplyr::case_when(',
+paste0('val %in% ', 
+       list00,
+       ' ~ "', names(list00), '"', collapse = ",\n\n"),
+', \n\nTRUE ~ "Other"
+                    ))')
+  ))
+  
+  temp <- paste0(sort(unique(dat_temp$val0[dat_temp$val == "Other"])), collapse = ", ")
+  str0 <- paste0(variable, " condensed: what is in 'Other': ", 
+                 ifelse(temp == "", "None", paste0("(",length(unique(dat_temp$val0[dat_temp$val == "Other"]))," phrases) ", temp)))
+  print(str0)
+  
+  dat_descr <- dplyr::bind_rows(dat_descr, dat_temp)
+  
+  return(list("dat_descr" = dat_descr, 
+              "dat_temp" = dat_temp, 
+              "str0" = str0))
+}
+
+
+find_words <- function(word, where) {
+  temp <- c()
+  for (i in 1:length(word)){
+    temp <- c(temp, 
+              where[grepl(x = where, ignore.case = TRUE, pattern = word[i])])
+  }
+  return(sort(unique(temp)))
+}
+```
+
+```{r load-data, echo = FALSE}
+# Download google spreadsheet --------------------------------------------------
+googledrive_dl <- "https://docs.google.com/spreadsheets/d/1l6a9Wb3M1PQV9UwHk7Ddfiiuq5U5lVW5"
+if (FALSE) {
+# SIGN INTO GOOGLE DRIVE--------------------------------------------------------
+googledrive_dl <- TRUE
+googledrive::drive_deauth()
+googledrive::drive_auth()
+2
+
+googledrive::drive_download(file = googledrive::as_id(googledrive_dl),  #"gap_survey_progression.csv",
+                            # type = "xlsx", 
+                            overwrite = TRUE, 
+                            path = here::here("data/data.xlsx"))
+}
+
+```
+
+```{r data-wrangle-classifiers}
+# Clean classifiers ------------------------------------------------------------
+classifiers <- readxl::read_xlsx(path = here::here("data/data.xlsx"), 
+                                 sheet = "Classifiers", 
+                                 skip = 1) %>% 
+  janitor::clean_names() 
+
+classifiers <- classifiers %>% 
+  dplyr::select("gear_type", # "gear_type_condensed", 
+                "research_field", # "research_field_condensed", 
+                "location", #"location_lat", "location_lon", 
+                "organism", # "organism_condensed", 
+                "survey") %>%
+  tidyr::pivot_longer(cols = c("gear_type", # "gear_type_condensed", 
+                               "research_field", # "research_field_condensed", 
+                               "location", #"location_lat", "location_lon", 
+                               "organism", # "organism_condensed", 
+                               "survey"), 
+                      names_to = "var", values_to = "val") %>% 
+  dplyr::left_join(classifiers %>% 
+                     dplyr::filter(!is.na(location)) %>% 
+                     dplyr::select(val = location, 
+                                   val_lat = location_lat, 
+                                   val_lon = location_lon) %>% 
+                     dplyr::mutate(var = "location"))
+
+dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"), 
+                         sheet = "Papers", 
+                         skip = 1)
+```
+
+```{r data-wrangle-data}
+# Clean data -------------------------------------------------------------------
+
+dat <- dat %>% 
+  janitor::clean_names() %>% 
+  dplyr::select(
+    orig_order, 
+    authors, 
+    article_title, 
+    source_title, 
+    document_type, 
+    # keywords_plus, 
+    author_keywords, 
+    abstract, 
+    affiliations, 
+    publication_year, 
+    doi_link, 
+    dplyr::starts_with("gear_type"), 
+    dplyr::starts_with("research_field"), 
+    dplyr::starts_with("location"), 
+    dplyr::starts_with("survey"),
+    gear_type_condensed,
+    research_field_condensed,
+    organism_condensed,
+    organism,
+    include
+  ) %>% 
+  dplyr::select(-dplyr::ends_with("_condensed"))
+
+# Pivot data from categories ---------------------------------------------------
+
+dat_descr <- dplyr::bind_rows(
+  
+  dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  dplyr::starts_with("gear_type")) %>% 
+    tidyr::pivot_longer(cols = dplyr::starts_with("gear_type"), 
+                        names_pattern = "gear_type(.*)", 
+                        names_to = "col",
+                        values_to = "val") %>% 
+    dplyr::mutate(var ="gear_type"), 
+  
+  # dat %>%
+  #   dplyr::filter(include == "YES") %>% 
+  #   dplyr::select(orig_order, 
+  #                 publication_year, 
+  #                 gear_type_condensed) %>% 
+  #   tidyr::pivot_longer(cols = gear_type_condensed, 
+  #                       names_to = "col",
+  #                       values_to = "val") %>% 
+  #   dplyr::mutate(var ="gear_type_condensed"), 
+  
+  dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  dplyr::starts_with("research_field")) %>% 
+    tidyr::pivot_longer(cols = dplyr::starts_with("research_field"), 
+                        names_pattern = "research_field(.*)", 
+                        names_to = "col",
+                        values_to = "val") %>% 
+    dplyr::mutate(var ="research_field"), 
+  
+  # dat %>%
+  #   dplyr::filter(include == "YES") %>% 
+  #   dplyr::select(orig_order, 
+  #                 publication_year, 
+  #                 research_field_condensed) %>% 
+  #   tidyr::pivot_longer(cols = research_field_condensed, 
+  #                       names_to = "col",
+  #                       values_to = "val") %>% 
+  #   dplyr::mutate(var ="research_field_condensed"), 
+  
+  dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  dplyr::starts_with("location")) %>% 
+    tidyr::pivot_longer(cols = dplyr::starts_with("location"), 
+                        names_pattern = "location(.*)", 
+                        names_to = "col",
+                        values_to = "val") %>% 
+    dplyr::mutate(var ="location"), 
+  
+  # dat %>%
+  # dplyr::filter(include == "YES") %>% 
+  # dplyr::select(orig_order, 
+  #               publication_year, 
+  #               location_condensed) %>% 
+  # tidyr::pivot_longer(cols = location_condensed, 
+  #                     names_to = "col",
+  #                     values_to = "val") %>% 
+  # dplyr::mutate(var ="location_condensed"), 
+  
+  dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  dplyr::starts_with("survey")) %>% 
+    tidyr::pivot_longer(cols = dplyr::starts_with("survey"), 
+                        names_pattern = "survey(.*)", 
+                        names_to = "col",
+                        values_to = "val") %>% 
+    dplyr::mutate(var ="survey"),  
+  
+  dat %>%
+    dplyr::filter(include == "YES") %>% 
+    dplyr::select(orig_order, 
+                  publication_year, 
+                  val = organism) %>% 
+    dplyr::mutate(var ="organism")#,
+  
+  # dat %>%
+  #   dplyr::filter(include == "YES") %>% 
+  #   dplyr::select(orig_order, 
+  #                 publication_year, 
+  #                 organism_condensed) %>% 
+  #   tidyr::pivot_longer(cols = organism_condensed, 
+  #                       names_to = "col",
+  #                       values_to = "val") %>% 
+  #   dplyr::mutate(var ="organism_condensed")
+) %>% 
+  
+  dplyr::select(-dplyr::ends_with("col")) %>% 
+  
+  # # add in columns from orig column
+  # dplyr::bind_rows(dat %>%
+  #                    dplyr::filter(include == "YES") %>% 
+  #                    dplyr::select(orig_order, publication_year, val = document_type) %>% 
+  #                    dplyr::mutate(var = "document_type")) %>% 
+  dplyr::bind_rows(dat %>%
+                     dplyr::filter(include == "YES") %>% 
+                     dplyr::select(orig_order, publication_year, val = source_title) %>% 
+                     dplyr::mutate(var = "source_title")) %>% 
+dplyr::mutate(
+      val = trimws(val), 
+      val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE), 
+      val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE), 
+      val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE))
+  
+# Research field condensed -----------------------------------------------------
+
+list0 <- list(
+  "Population Biology/Stock Assessment" = 
+    c("Population Model", "Model-Based Indicies", "Design-based indicies", "Population Biology/Stock Assessment",  
+      "Taxonomy", "Histology", "Otolith", "Food web model", "Recruitment"), 
+  "Management (Quantitative)" = c("Stock Assessment Model", "Reference points", "TACC Thresholds", "Harvest Control Rules", "Bycatch", "Management (Quantitative)"),
+  "Life History" = "Life History", 
+  "Ecosystems" = c("Ecosystem-based management", "Essential Fish Habitat", "Spatial Ecology", "Ecosystems"),
+  "Oceanography" = c("Oceanography"), 
+  "Genetics" = c("Genetics"), 
+  "Social Sciences" = c("Socio-Econ", "Economics", "Social Sciences"), 
+  "Spatial Ecology" = c("Species Distribution Model"), 
+  "Methods/Statistics/Design" = c("Combine Surveys", "Combine with Dependant", "Survey Design", 
+                                  "Survey Statistics", "Catchability", "Sampling design", "Uncertainty", "Emerging Methods", "Methods/Statistics/Design"), 
+  "System Distruption" = c("Wind Farm mitigation", "COVID-19", "Survey Mitigation", "Oil spill"), 
+  "Climate change" = c("Climate change"), 
+  "Conservation" = c("MPA"), 
+  "Data availability" = c("Data availability"), 
+  "Review/Editorial" = c("Review", "Editorial"), 
+  "Outreach and Communication" = c("Outreach and Communication")
+)
+
+aaa <- data_condense(dat_descr, variable = "research_field", list0)
+dat_descr <- aaa$dat_descr
+
+# Gear type condensed ----------------------------------------------------------
+
+list0 <- list(
+  "Mobile Gear" = c("Ichthyoplankton", "Pelagic net", 
+                    "Poly Nor’Eastern, four-seam, hard bottom, high-rise bottom trawl (AFSC BTS AI & GOA)", 
+                    "Beach seine", "Bottom Trawl", "Beam Trawl", 
+                    "Otter Trawl", 
+                    "Gillnets", "Longline", "Bongo net", "Manta tow"), 
+  "Fixed Gear" = c("Grab samples", "Traps", "Hook & Line"), 
+  "Advanced Tech" = c("Still camera", "Video", 
+                      "3D stereo camera (e.g., stereo-baited remote underwater video (S-BRUV))",
+                      "Advanced Tech","Aerial survey", "Uncrewed surface vehicle saildrone"), 
+  "Fisheries Dependent" = c("Fisheries-Dependant"), 
+  "Acoustic" = c("Acoustics"), 
+  "Diver" = c("underwater visual census"), 
+  "Tagging" = c("Satellite tags", "Capture–recapture"), 
+  "Stock assessments" = c("Stock assessments"), 
+  "Wind farms" = c("Wind farms"),   
+  "Fisher interviews" = c("Fisher interviews"),  
+  "None" = c("None"), 
+  "Multiple" = c("Multiple"))
+
+aaa <- data_condense(dat_descr, variable = "gear_type", list0, list_as_is = TRUE)
+dat_descr <- aaa$dat_descr
+
+# location condensed -----------------------------------------------------------
+
+list0 <- list(
+  "NW Atlantic" = c("Mid-NW Atlantic", "NW Atlantic", "South-NW Atlantic"), 
+  "NE Atlantic" = c("Azores", "Celtic Sea", "NE Atlantic", "Iberian Coast"),
+  "SE Atlantic" = c("South Africa"),
+  "SW Atlantic" = c("Brazil"), 
+  "Caribbean" = c("Caribbean"), 
+  "NE Pacific" = c("Alaska", "NE Pacific", "Pacific West Coast"), 
+  "NW Pacific" = c("China", "Russia"), 
+  "SW Pacific" = c("Tasman Sea", "Coral Sea", "Arafura Sea", "Great Australian Bight"), 
+  "Central Pacific" = c("Hawaii"), 
+  "Southern Ocean" = c("Southern Ocean"), 
+  "Indian Ocean" = c("Eastern Indian Ocean"), 
+  "North Sea" = c("English Channel", "Greater North Sea"), 
+  "Mediterranean Sea" = c("Adriatic Sea", "Mediterranean Sea"), 
+  "Baltic Sea" = c("Baltic Sea"), 
+  "Gulf of Mexico" = c("Gulf of Mexico"), 
+  "Arctic Ocean" = c("Barents Sea"), 
+  "Global" = "Global",
+  "Simulation" = "Simulation")
+
+aaa <- data_condense(dat_descr, variable = "location", list0, list_as_is = TRUE)
+
+dat_descr <- aaa$dat_descr
+
+classifiers_temp <- 
+  data.frame(
+    var = "location_condensed",
+    val  = c("NW Atlantic", "NE Atlantic", "Caribbean", "NE Pacific", "NW Pacific", 
+             "SW Pacific", "Central Pacific", "Southern Ocean", 
+             "North Sea", "Mediterranean Sea", 
+             "Southern Ocean", "Baltic Sea", "Gulf of Mexico", "Arctic Ocean", 
+             "SE Atlantic", "SW Atlantic", "Indian Ocean", 
+             "Global", "Simulation", "Other"),
+    val_lat = c(43.292702, 49.80919, 15.41066, 53.199042, 56.728246, 
+                35.995232, 23.845024, -52.791454, 
+                61.764, 35.689542, 
+                -64.822538, 58.42283, 25.116756, 83.954235,
+                -20.161551, -28.943148, -24.366244, 
+                -11.67696, -39.625135, 61.552865),
+    val_lon = c(-50.260647, -19.147368, -66.959865, -166.803612, 167.708109, 
+                150.305766, 177.727639, 75.268651, 
+                -2.084405, 17.559606, 
+                36.290404,	19.569313, -89.265027, 38.138635, 
+                -4.220581, -35.070190, 78.420416,
+                -149.731341, -147.797747, 98.435668) ) 
+
+classifiers <- classifiers_temp %>% 
+  dplyr::bind_rows(classifiers)
+
+print(paste0("In classifiers, not in category: ", paste0(setdiff(classifiers_temp$val, names(list0)), collapse = ", ")))
+print(paste0("In category, not in : classifiers", paste0(setdiff(names(list0), classifiers_temp$val), collapse = ", ")))
+
+# Clean key data ---------------------------------------------------------------
+
+### Create key word column -----------------------------------------------------
+
+dat_temp <- dat %>%
+  dplyr::filter(is.na(include) | include %in% c("YES", "MAYBE")) %>%
+  dplyr::select(author_keywords, publication_year, orig_order) %>%
+  tidyr::separate(col = "author_keywords", sep = "; ", remove = FALSE, into = paste0("key_", 1:10)) %>% 
+  dplyr::select(-author_keywords) %>%
+  tidyr::pivot_longer(cols = paste0("key_", 1:10), names_to = "key_var", values_to = "val") %>%
+  dplyr::select(-key_var) %>% 
+  dplyr::filter(!is.na(val)) %>% 
+  dplyr::mutate(
+    var = "keywords", 
+    val = gsub(x = val, pattern = "-", replacement = " "), 
+    val = tolower(trimws(val)), 
+    val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE), 
+    val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE), 
+    val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE))
+
+dat_descr <- dplyr::bind_rows(dat_descr, dat_temp)
+
+### Create key word categories part 1 -------------------------------------------------
+
+# temp <- sort(unique(dat_temp$val))
+
+list0 <- list(
+  # Survey types ---------------
+  "Longline" = 
+    c(find_words(where = dat_temp$val, word = c("longlin"))), 
+  "BTS" = 
+    c(find_words(where = dat_temp$val, word = c("bottom trawl"))), 
+  "ATS" =
+    c(find_words(where = dat_temp$val, word = c("acoustic", "echo", "sonar", "target strength", "esp3"))), 
+  "Ring nets" = 
+    c(find_words(where = dat_temp$val, word = c("ring nets"))), 
+  "Trap" = 
+    c(find_words(where = dat_temp$val, word = c("trap"))), 
+  "Transboundary" = 
+    c(find_words(where = dat_temp$val, word = c("transboundary"))),
+  "aerial" = 
+    c(find_words(where = dat_temp$val, word = c("drone", "aerial", "plane"))),
+  "Camera" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("camera", "video", "television", "photography", "stereo", 
+                     "visual", "image", "photogrammetry", "photo", "picture", "bruv"))), 
+  "Socio-economics" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("econom", "socio", "social", "interview", " mail", "revenue", 
+                     "livelihood", "guidelines for collaboration", "price", "cost", 
+                     "fuel savings", 
+                     "questionnaire", "human dimension", "nonresponse bias"))), 
+  "citizen science" = 
+    c(find_words(where = dat_temp$val, word = c("citizen science", "volunteer"))), 
+  "Emerging technology" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("glider", "technology creep", "autotomy", "auv",
+                     "remotely operated vehicle", "rov",
+                     "automated devices", "autonomous underwater vehicle", "automated marine monitoring"))), 
+  "Satellite data" = 
+    c(find_words(where = dat_temp$val, word = c("lidar", "satellite", "remote sensing"))), 
+  "Tagging" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("mark recapture", "tag", "transmitter", "telemetry", "detection", 
+                     "radio telemtry", "radiotracking", "detectability"))), 
+  "Diving" = 
+    c(find_words(where = dat_temp$val, word = c("diving", "scuba"))), 
+  "Hook and Line" = 
+    c(find_words(where = dat_temp$val, word = c("hook"))), 
+  "Survey design" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("design", "survey est", "footrope", "stratification",  "fixed station", 
+                     "area swept", "soak time", "tow duration", "tow time", "baci", 
+                     "vessel effect", "swept area", "selectivity", "q", "catchability", 
+                     "net spread", "survey optomization", "stratified random", "mesh size"))), 
+  "net" = 
+    c(find_words(where = dat_temp$val, word = c("net"))), 
+  
+  # ----------
+  "Morphometrics and anatomy" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("morphomet", "body mass", "body size", 
+                     "gonad", "spines", "body", "swim bladder", "pigmentation", 
+                     "allometric", "fin", "albinism", "follicle", "limb", 
+                     "sclerochronology", "morphology", "Leucism", "fins"))), 
+  "epidemiology" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("epidemiology", "epidemic", "epidemi", "bacteria", "penicillium", "bonamia exitiosa", "infectivity", 
+                     "virus", "viral", "disease", "pathogen", "wasting", "fungal", "independent action hypothesis"))), 
+  "Age and growth" = 
+    c(find_words(where = dat_temp$val, word = c("otolith", "age", "length", "von bertalanffy", "aging", "size"))), 
+  "Food webs" = 
+    c(find_words(where = dat_temp$val, word = c("stomach", "food habit", "food web", "trophic", 
+                                                "top down", "bottom up", "isotope", "diet", "food", "consumption"))), 
+  "bioenergetics" = 
+    c(find_words(where = dat_temp$val, word = c("biophysical", "bioenergetics", "swimming speed", "oxygen demand", "movement"))), 
+  "Life history" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("spawn", "settlement", "sex", "nurseries", "year class", "refugia", 
+                     "larv", "egg", "reproduc", "migration", "breeding", "mortality", 
+                     "maturity", "fecundity", "life history", "recruitment", "herbivory", "protogynous", 
+                     "migratory", "longevity", "juvenile", "ovulatory", "survival", "smolt", "ontogenic", 
+                     "survivorship", "feeding", "birthdate", "growth rate", "biocriteria", "biodivercity", 
+                     "density", "density dependen", "homing", "natal", "density independ", "gestation", 
+                     "hatch date", "colonization", "dioecy", "endemic", "in vivo", "fitness", "oocyte", 
+                     "ecophysiology", 
+                     "young of the year", "behavior", "behaviour", "biomimicking", "biomarker", "movements", 
+                     "site fidelity", "moulting", "young of year", "nursery"))), 
+  "Ecology" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("preditor", "prey", "ecolog", "preditor", "niche", "predator", 
+                     "carrying capacity", "j curve", "predation", "symbiosis", 
+                     "phenology", "phenotypic", "competition", "mutualism", 
+                     "edge effects", "adaption", "occupancy", "match mismatch", 
+                     "adaptive capacity", "shifting dominance", "elasticity", "systemic shock", 
+                     "phase shift", "seasonality", "seasonal change", "knock on effect", 
+                     "match mismatch hypothesis", "ecospace", "ecotype", "stability", 
+                     "adaptation", "vital rate", "species interactions"))), 
+  "Evolution" = 
+    find_words(where = dat_temp$val, word = c("evolution", "domestication selection", "selection")),
+  "Diversity" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("richness", "diversity", "species composition", "biocomplexity", "maxent", "composition", "density"))), 
+  "Genetics and Molecular Sciences" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("geneti", "mitochondrial", "genome", "dna", "gene", "haplotypes", "eda", 
+                     "polymorphism", "nucleotide", "ligand", "histology", "coalescent", "biomod", "specificity", 
+                     "immunoglobulin", "cell cycle", "qpcr", "metals", "loci", 
+                     "alleles", "rad sequencing", "fatty acid", "bioassay"))), 
+  "Taxonomy" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("taxonom", "synchrony", "identification", "systematic", "speciation", 
+                     "species association", "species", "classification"))),
+  
+  # Policy and conservation --------------------
+  "Policy" = 
+    c(find_words(where = dat_temp$val, word = c("policy"))), 
+  "Conservation and Management" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("management", "msa", "strategy framework", "lme", "highly migratory", 
+                     "marine stewardship", "time/area closures", "recovery", "iucn", 
+                     "living shorelines", "collaboration, collaborative governance", "collapse", "collapses",
+                     "no take marine reserves", "restoration", "conservation", "protected", 
+                     "decision making", "decision tables", "status", 
+                     "rare", "species of concern", "sanctuary"))),
+  # events ------------
+  "Polution" = 
+    c(find_words(where = dat_temp$val, word = c("plastic", "waste", "contaminants", "metals", "plastic bag", "lethal dose"))), 
+  "Disasters" = 
+    c(find_words(where = dat_temp$val, word = c("exxon valdez", "weather", "oil spill", "oil", "extreme environment events"))), 
+  "COVID-19" = 
+    c(find_words(where = dat_temp$val, word = c("covid", "pandemic"))), 
+  "harmful algea bloom" = c(find_words(where = dat_temp$val, word = 
+                                         c("red tide", "harmful algea bloom", "hab", "bloom"))),
+  "wind farms" = 
+    c(find_words(where = dat_temp$val, word = c("wind farm", "offshore wind", "renewable energy"))), 
+  "Stock assessment" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("stock", "assessment", "hcr", "harvest control", "reference points", 
+                     "allowable commercial catch", "allowable catch", "quota", 
+                     "moratorium", "mpa", "msy",
+                     "tac", "trip limit"))), 
+  
+  "Fishery dependent" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("fishery dependent", "catch reports", 
+                     "commercial", "seafood", "compensation", "fleet", 
+                     "landings", "seafood exports", "observer", "logbook"))), 
+  "Fishery independent" = 
+    c(find_words(where = dat_temp$val, word = c("fishery independent"))), 
+  "Recreational fisheries" = 
+    c(find_words(where = dat_temp$val, word = c("angler", "catch and release", "angling", "recreation"))), 
+  "Stakeholder" = 
+    c(find_words(where = dat_temp$val, word = c("stakeholder"))), 
+  "Samples" = 
+    c(find_words(where = dat_temp$val, word = c("sampl", "voucher"))), 
+  
+  # modeling ------------
+  "Ecosystem-based Fisheries Management" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("ecopath", "Ecosystem-based Fisheries Management", 
+                     "ecosim", #"eaf", 
+                     "ebfm", "atlantis", "norwecom.e2e"))), 
+  "Machine learning/AI" = 
+    c(find_words(where = dat_temp$val, word = c("Machine learning", "ML", "artificial intelligence", "AI"))), 
+  "Modeling and statistics" = 
+    c(find_words(where = dat_temp$val, word = 
+                   
+                   c("model", "variable", "parsimony", "empirical", "gaussian", 
+                     "boosted regression tree", "btr", "gam", "generalized linear models", 
+                     "glm", "generalized additive models", "error propagation", "brt", 
+                     "autocorrelation", "optimization", "equation", "statistic", "estimation", 
+                     "tweedie", "variogram", "sequential outlier rejection", "anova", 
+                     "forecast", "monte carlo", "simulation", "knots", "permutation", 
+                     "pca", "mse", "meancount", "maxn", "optimal weightings", "mantel tests", 
+                     "predictability", "bias", "coefficient", "auc", "annual variations", "scheffe test", 
+                     "random", "linear", "time varying parameters", "parameters", "inla", 
+                     "likelihood", "prediction", "analysis", "randomization", "multi scale", "multiscale", "multi component", 
+                     "variance", "cusum", "nmds", "anosim"))), 
+  
+  "Species distribution modeling" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("habitat suitability", "essential fish hab", "sdm", 
+                     "Spatiotemporal", "spatiotemp", "spatio temp", "habitat mapping",
+                     "vast", "distribution", "hotspot",
+                     "species distribution", "spatial distribution"))), 
+  
+  "Bycatch" = 
+    c(find_words(where = dat_temp$val, word = c("bycatch", "by catch", "nontarget", "exploitation"))), 
+  "Indicies" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("index", "indic", "catch per unit effort", "cpue", "lpue", "biomass", "abundance","population", "presence", "absence"))), 
+  "USV" = 
+    c(find_words(where = dat_temp$val, word = c("uncrewed surface vehicle", "usv"))), 
+  "Catchability" = 
+    c(find_words(where = dat_temp$val, word = c("catchability"))), 
+  "Traffic light" = 
+    c(find_words(where = dat_temp$val, word = c("traffic light"))), 
+  
+  # animals ---------------------
+  "Turtle" = 
+    c(find_words(where = dat_temp$val, word = c("turtle"))), 
+  "Fish" = 
+    c(find_words(where = dat_temp$val, word = c(" sole", "cod", " menhaden", "fish", " turbot", "thunnus", "epinephelidae", "epincphelus", 
+                                                "salmon", "raja ", "flounder", "stickleback", "croaker", "mackerel", 
+                                                "grouper", "herring", "merluccius", "dolly varden", "kamchatka", "xiphias gladius", "kajikia audax", 
+                                                "marlin", "snapper", "rays", "sockeye", "sciaeni", "whiting", "common snook", 
+                                                "teleost", "tilapia", "pollock", "bass", "shad", "notothenioids", "haddock", 
+                                                "alosa", "eel", "ichthyo", "mackerel", "skate", "sardine", "menhaden", 
+                                                "ammodytes", "trachinotus", "vermilion", "trichiurus", "trout", "paralichthys", 
+                                                "saurida elongate", "rajidae", "sebastes", "myctophid", "scup", "clupeoids", 
+                                                "lutjanidae", "lumpsucker", "lutjanus", "sciaenops", "platichthys", "mugilidae", 
+                                                "sillaginids", "stomiidae", "alfonsino", "cepolidae", "chaunax penicillatus", 
+                                                "hake", "capelin", "akule", "brevoortia", "anguilla", "clupea", "macrouridae", 
+                                                "grunt", "naso unicornis", "sparidae", "sillago", "syngnathidae", "sillaginidae", 
+                                                "Mouthbrooder", "engraulis", "anchovy", "anarhichadidae", "smelt", "mullet", 
+                                                "cynoscion nebulosus", "etelis", "lichia amia", "malacathidae", "kajikia audax", "kokanee", 
+                                                "limanda", "wrasse", "abalone", "Haliotis kamtschatkana", "tuna"))), 
+  "Seaweed" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("saccharina", "sea weed", "seaweed", "macroalgae", "gelidiaceae", "bonamia", "epibenthos", 
+                     "zostera", "kelp", "posidonia", "rockweed", "ascophyllum nodosum", "halimeda", 
+                     "alga", "eelgrass", "sargassum", "vegetation"))),
+  "Urchin" = 
+    c(find_words(where = dat_temp$val, word = c("strongy", "urchin"))), 
+  "Lobster" = 
+    c(find_words(where = dat_temp$val, word = c("lobster", "jasus"))), 
+  "Crab" = 
+    c(find_words(where = dat_temp$val, word = c("epialtidae", "chionoecetes",  "crab", "callinectes", "chaceon notialis", "pugettia"))), 
+  "Scallop" = 
+    c(find_words(where = dat_temp$val, word = c("scallop", "pecten maximus"))),
+  "Birds" = 
+    c(find_words(where = dat_temp$val, word = c("bird", "waterfowl", "flock", "albatross", "anas "))),
+  "Sponge" = 
+    c(find_words(where = dat_temp$val, word = c("sponge"))),
+  "Coral" = 
+    c(find_words(where = dat_temp$val, word = c("coral", "reef", "scleractinia"))), 
+  "Shrimp" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("shrimp", "prawn", "automate isabelae", "stomatopoda", 
+                     "alpheidae", "penaeids", "penaeidae"))), 
+  "Clam" = 
+    c(find_words(where = dat_temp$val, word = c("paua", "clam", "geoduck", "spisula", "haliotis", "macoma", "protothaca staminea", "periwinkle", "panopea globosa"))), 
+  "Scallop" = 
+    c(find_words(where = dat_temp$val, word = c("argopecten", "oyster"))), 
+  "Oysters" = 
+    c(find_words(where = dat_temp$val, word = c("oyster", "tiostrea"))), 
+  "Fungi" = 
+    c(find_words(where = dat_temp$val, word = c("Fungi"))), 
+  "Squid & Octopus" = 
+    c(find_words(where = dat_temp$val, word = c("squid", "sepia officinalis", "Octop", "loligo", "lolliguncula ", "cephalopod", "humboldt"))), 
+  "Elasmobranchs" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("elasmobranch", "chimaera", "chondrichthyans", "chondrichthyes", 
+                     "dasyatidae", 
+                     "shark", "mako", "blackfin", "squalus", "batoid", "squatina",
+                     "selachii", "rhinoptera", "carcharodon", "myliobatis"))), 
+  "Plankton" = 
+    c(find_words(where = dat_temp$val, word = c("plankton", "flow cytometry", "chlorophyll", "flowcam", "diatom", "copepod"))), 
+  "Sea stars" = 
+    c(find_words(where = dat_temp$val, word = c("asterias", "sea star"))), 
+  "Marine mammals" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("mammals", "megafauna", "dolphin", "cetacean", 
+                     "stenella", "benguela", "delphini", "otter", 
+                     "seal", "sea lion", "manatee"))), 
+  "snails" = 
+    c(find_words(where = dat_temp$val, word = c("whelk", "gastropod", "busycotypus", "conch", "haliotid"))), 
+  "Sea turtles" =
+    c(find_words(where = dat_temp$val, word = c("turtle", "kemp's ridley"))), 
+  "Other Invertebrates" =
+    c(find_words(where = dat_temp$val, word = 
+                   c("Invertebrate", "stichopodidae", "mollusk", "didemnum vexillum", 
+                     "ciona intestinalis", "sea anemone", "neonates", "epizoanthidae"))), 
+  
+  # Physical sciences ---------------------
+  "Oceanography" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("thermocline", "rugosity", "roms", "environmental effect", 
+                     "frontal system", "flux", "biogeochemistry", "biogeography", 
+                     "sea ice", "sea level", "salinity", "waves", "sediment", 
+                     "bathymetry", "bottom type", "pelagic", "zone", "bathyal",
+                     "dissolved oxygen", "salinity", "flow field", 
+                     "nutrient and carbon cycling", "depth", "upwelling", "the blob"))), 
+  "Oscillation" = 
+    c(find_words(where = dat_temp$val, word = c("el nino", "decadal", "Oscillation", "la nina", "enso"))), 
+  "Climate change" = 
+    c(find_words(where = dat_temp$val, word = c("global change", "global warming", "Climate", "shifting baseline", "lifting baseline"))),
+  "Temperature" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("heatwave", "temperature", "cold pool", "bt", "sst", 
+                     "cold spell", "anoxia", "temperature", "cold stress", "cold", 
+                     "thermal", "hypoxia", "winterkill", # "the blob", <-- moved to oceanography
+                     "spring transition"))), 
+  
+  
+  
+  # general --------------
+  "Anthropogenic" = 
+    c(find_words(where = dat_temp$val, word = c("anthropogenic "))),
+  "Data" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("metadata", "access to information", "zero inflated", 
+                     "user retention", "data", "open access", "open science", 
+                     "r", "python"))),
+  "Education and Outreach" = 
+    c(find_words(where = dat_temp$val, word = c("education", "museum", "news media"))),
+  "Place Phrases" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("atlantic", "gulf", "watershed", "pacific", "ocean", "channel", "scotia arc", "nunavut", 
+                     "belize", "aleutian", "treasure coast", "new zealand", "new york", "iceland", 
+                     "shelf", " sea", "estuar", "strait", "bay", "canyon", "river", "biscay", "ghana", 
+                     "south", "north", "east", "west", "central", "degrees e", "degrees n", "malaysia", 
+                     "africa", "niger", "isles", "british columbia", "japan", "Kenai", "Kenya", 
+                     "argentina", "somalia", "usa", "wetland", "uruguay", "namibia", "mississippi",
+                     "zanzibar", "plateau", "canad", "chile", "china", "brazil", "california", 
+                     "lake", "mangrove", "bahamas", "florida", "gadoids", "gadus", "honduras", 
+                     "newfoundland", "nordic", "virginia", "salvelinus leucomaenis", "wetland", 
+                     "galapagos", "guam", "corsica", "island", "caribbean", "usa", "us ",
+                     "kuroshio", "indonesia", "palau", "panama", "mediterranean", 
+                     "philippines", "alabama", "alaska", "wales", "colombia", "scandinavia", 
+                     "india", "notothenio", "aegean", "agulhas bank", "kefalonia", "kattegat", 
+                     "senegal", "uganda", "st lucia", "virgin islands", "louisiana", "australia", 
+                     "st. croix", "texas", "washington", "state", "antarctic"))), 
+  "Ocean featrues" = c(find_words(where = dat_temp$val, word = c("seamounts", "harbor", "coastal", "current", "seascape"))),
+  "Invasive" = c(find_words(where = dat_temp$val, word = c("Invasive", "invasion"))),
+  "Indigenous" = c(find_words(where = dat_temp$val, word = c("indigenous", "knowledge"))),
+  "Vessel" = c(find_words(where = dat_temp$val, word = c("vessel", "boat", "ship"))),
+  "Harvest" = c(find_words(where = dat_temp$val, word = c("Harvest"))),
+  "Benthic" = c(find_words(where = dat_temp$val, word = c("Benthic", "bentho"))),
+  "Ecosystem" = c(find_words(where = dat_temp$val, word = c("Ecosystem", "connectivity"))),
+  
+  "Water phrases" = c(find_words(where = dat_temp$val, word = c("water"))), 
+  "Fauna phrases" = c(find_words(where = dat_temp$val, word = c("fauna"))),
+  "Article phrases" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("issue", "peer review", "keywords", "article", "review", "methods", "results"))), 
+  "Community phrases" = c(find_words(where = dat_temp$val, word = c("community", "communities"))), 
+  "Mapping phrases" = c(find_words(where = dat_temp$val, word = c("krigging", "moran", "grid", "raster", "map", "gis", "kernel"))), 
+  "Habitat phrases" = c(find_words(where = dat_temp$val, word = c("habtiat", "mapping"))),
+  "Catch phrases" = c(find_words(where = dat_temp$val, word = c("catch"))), 
+  "Spatial phrases" = c(find_words(where = dat_temp$val, word = c("spatial"))), 
+  "Trawl phrases" = c(find_words(where = dat_temp$val, word = c("trawl"))), 
+  "Survey phrases" = c(find_words(where = dat_temp$val, word = c("survey", "calcofi", "cgfs", "medits", "field study"))) 
+)
+
+aaa <- data_condense(dat_descr, variable = "keywords", list0, append = "cond1")
+
+dat_descr <- aaa$dat_descr
+
+### Create key word categories -------------------------------------------------
+
+# temp <- sort(unique(dat_temp$val))
+
+list0 <- list(
+  "Mobile gear" = c("Longline", "BTS", "ATS", "Ring nets", "Hook and Line", "net", "Survey phrases", "Trawl phrases"), 
+  "Stationary gear" = c("Trap"), 
+  "Advanced technology" = c("aerial", "camera", "Emerging technology", "USV"),                    
+  "Socio-economics" = c("Socio-economics"), 
+  "citizen science" = "citizen science", 
+  "Remote data" = c("Satellite data"), 
+  "Tagging" = "Tagging", 
+  "Diving" = "Diving", 
+  "Survey design" = c("Survey design"), 
+  "Biology" = c("Morphometrics and anatomy", "epidemiology", "Age and growth", "Food webs", "bioenergetics", "Life history", "Ecology", "Evolution", "Diversity", "Genetics and Molecular Sciences", "Taxonomy", "Habitat phrases", "Ecosystem", "Community phrases", "Spatial phrases"), 
+  "Policy" = c("Policy", "Conservation and Management"), 
+  "Acute disruptions" = c("Disasters", "COVID-19", "harmful algea bloom", "wind farms"), 
+  "Long-term disruptions" = c("Oscillation", "Climate change", "Polution", "Anthropogenic"),
+  "Stock assessment" = c("Stock assessment", "Transboundary", "Indicies"), 
+  "Fishery dependent" = c("Fishery dependent", "Bycatch", "Harvest", "Catch phrases"),  
+  "Fishery independent" = c("Fishery independent", "Catchability"), 
+  "Recreational fisheries" = c("Recreational fisheries"), 
+  "Stakeholder" = c("Stakeholder", "Education and Outreach", "Indigenous"), 
+  "Modeling" = c("Ecosystem-based Fisheries Management", "Machine learning/AI", "Modeling and statistics", "Species distribution modeling", "Mapping phrases", "Traffic light"), 
+  "Organisms" = c("Turtle", "Fish", "Seaweed", "Urchin", "Lobster", "Crab", "Scallop", "Birds", "Sponge", "Coral", "Shrimp", "Clam", "Scallop", "Oysters", "Fungi", "Squid & Octopus", "Elasmobranchs", "Plankton", "Sea stars", "Marine mammals", "snails", "Sea turtles", "Other Invertebrates", "Invasive", "Fauna phrases"), 
+  "Oceanography" = c("Oceanography", "Ocean featrues", "Water phrases", "Benthic"), 
+  "Temperature" = "Temperature", 
+  "Data" = "Data", 
+  "Places" = "Place Phrases", 
+  "Vessel" = "Vessel",
+  "Research" = c("Article phrases", "Samples")
+  )
+
+aaa <- data_condense(dat_descr, variable = "keywords_cond1", list0, append = "cond2")
+
+dat_descr <- aaa$dat_descr
+
+# Clean Affiliation data -------------------------------------------------------
+
+
+# Clean affiliation data -------------------------------------------------------
+
+# Create affiliation categories ------------------------------------------------
+
+dat_temp <- dat %>%
+  dplyr::filter(is.na(include) | include %in% c("YES", "MAYBE")) %>%
+  dplyr::select(affiliations, publication_year, orig_order) %>%
+  tidyr::separate(col = "affiliations", sep = "; ", remove = FALSE, into = paste0("aff_", 1:10)) %>% 
+  dplyr::select(-affiliations) %>%
+  tidyr::pivot_longer(cols = paste0("aff_", 1:10), names_to = "aff_var", values_to = "val") %>%
+  dplyr::select(-aff_var) %>% 
+  dplyr::filter(!is.na(val)) %>% 
+  dplyr::mutate(
+    var = "affiliations", 
+    val = gsub(x = val, pattern = "-", replacement = " "), 
+    val = tolower(trimws(val)), 
+    val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE), 
+    val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE), 
+    val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE))
+
+dat_descr <- dplyr::bind_rows(dat_descr, dat_temp)
+
+# Create condensed affiliation categories (part 1) -------------------------------------
+
+list0 <- list00 <- list(
+  
+  # Medical ---------------
+  
+  "Medical" = c(find_words(where = dat_temp$val, word = c("hospital", "Medical", "fred hutchinson cancer center"))), 
+  
+  # Universities ---------------
+  
+  "Australia Universities" = 
+    c(find_words(where = dat_temp$val, 
+                 word = c("flinders university south australia" , "university of wollongong", "university of western australia", "university of canberra", "james cook university", "edith cowan university", "university of the sunshine coast", "university of queensland", "university of adelaide", "queensland university of technology",  "australian national university", "charles darwin university", "charles sturt university",  "deakin university" , "griffith university" , "southern cross university" , "macquarie university", "murdoch university","university of sydney", "university of tasmania", "university of technology sydney", "university of new south wales", "university of newcastle", "university of melbourne", "curtin university"))), 
+  "Austria Universities" = c(find_words(where = dat_temp$val, word = c("technische universitat wien"))), 
+  "Argentina Universities" = c(find_words(where = dat_temp$val, word = c("universidad de cordoba", "national university of mar del plata", "university of palermo", "university of buenos aires", "universidad nacional del comahue"))), 
+  "Belgium Universities" = c(find_words(where = dat_temp$val, word = c("ku leuven", "universite libre de bruxelles", "ghent university" ))), 
+  "Brazil Universities" = c(find_words(where = dat_temp$val, word = c("universidade federal rural de pernambuco", "universidade federal de alagoas", "universidade federal de pernambuco", "universidade federal de sergipe", "universidade federal do espirito santo", "universidade federal do para", "universidade federal do parana" , "universidade federal do rio grande", "universidade federal rural da amazonia", "universidade federal rural de pernambuco (ufrpe)", "universidade de sao paulo"))),
+  "Canadia Universities" = c(find_words(where = dat_temp$val, word = 
+c("university of new brunswick", "university of manitoba","acadia university", "carleton university", "concordia university  canada", "bangor university", "dalhousie university", "queens university  canada", "nova southeastern university" , "laval university", "mcgill university", "memorial university newfoundland" ,"vancouver island university", "university of toronto", "university of british columbia" , "universite de montreal", "university of quebec", "university of guelph", "universite du quebec a rimouski", "simon fraser university", "victoria university", "university toronto", "university of victoria", "queens university canada", "concordia university"))), 
+  "China Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of science & technology", "ningbo university", "university of hong kong", "zhejiang ocean university", "tianjin university" , "shaanxi normal university", "shandong university", "shanghai ocean university", "northwest university xi'an", "ocean university of china", "university of chinese academy of sciences", "guangxi university", "guiyang university","nanjing university of information science & technology", "nanning normal university", "chinese university of hong kong", "east china normal university", "dalian ocean university", "hong kong baptist university", "guangdong ocean university", "jimei university"  ))), 
+  
+  "Colombia Universities" = c(find_words(where = dat_temp$val, word = c("universidad nacional de colombia", "universidad del magdalena"))),
+  "Chile Universities" = c(find_words(where = dat_temp$val, word = c("universidad de los lagos", "universidad de concepcion", "universidad de antofagasta", "universidad austral de chile", "pontificia universidad catolica de chile" ))),
+  
+  "Cuba Universities" = c(find_words(where = dat_temp$val, word = c("universidad de la habana"))),
+  
+  "Czechia Universities" = c(find_words(where = dat_temp$val, word = c("university of south bohemia", "czech university of life sciences prague" ))), 
+  "Denmark Universities" = c(find_words(where = dat_temp$val, word = c("aarhus university", "university of the faroe islands", "university of copenhagen", "roskilde university", "technical university of denmark"))),
+  "Ecuador Universities" = c(find_words(where = dat_temp$val, word = c("escuela superior politecnica del litoral"))),
+  "Estonia Universities" = c(find_words(where = dat_temp$val, word = c("university of tartu", "tartu university"))),
+  "Ethiopia Universities" = c(find_words(where = dat_temp$val, word = c("adama science & technology university", "bahir dar university", "addis ababa university"))),
+  "Fiji Universities" = c(find_words(where = dat_temp$val, word = c("university of the south pacific"))), 
+  "Finland Universities" = c(find_words(where = dat_temp$val, word = c("university of helsinki", "abo akademi university" ))), 
+  "France Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("agroparistech", "university of la reunion", "universite des antilles", "mines paristech", "universite paul valery", "universite de bretagne occidentale", "universite de caen normandie", "aix marseille universite", "universite de toulouse", "sorbonne universite" , "nantes universite", "institut universitaire europeen de la mer (iuem)", "ecole pratique des hautes etudes", "universite de montpellier", "universite de pau et des pays de l'adour", "ensta bretagne", "universite perpignan via domitia", "universite psl", "universite paris"))), 
+  "Germany Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of munich", "university of kiel", "university of hamburg", "jacobs university", "free university of berlin", "university of bielefeld", "saarland university", "leipzig university", "humboldt university of berlin", "bremen university of applied sciences", "university of duisburg essen", "university of bremen", "braunschweig university of technology"))), 
+  "Ghana Universities" = c(find_words(where = dat_temp$val, word = c("university of cape coast"))), 
+  "Greece Universities" = 
+    c(find_words(where = dat_temp$val, word = c("university of crete", "western greece university", "national & kapodistrian university of athens", 
+                                                "university of thessaly", "university of patras", "university of aegean", "aristotle university of thessaloniki"))), 
+  "Iceland Universities" = c(find_words(where = dat_temp$val, word = c("university of iceland"))), 
+  "Italy Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of trieste", "university of sassari", "university of siena", "sapienza university rome", 
+                     "universita ca foscari venezia", "university of bologna", "tuscia university", 
+                     "universita degli studi di bari aldo moro", "universita lumsa", "university of cagliari", 
+                     "university of rome tor vergata", "university of padua", "university of florence", "university of genoa"))), 
+  "Indonesia Universities" = c(find_words(where = dat_temp$val, word = c("brawijaya university"))), 
+  "India Universities" = c(find_words(where = dat_temp$val, word = c("kerala university of fisheries & ocean studies"))), 
+  "Iran Universities" = c(find_words(where = dat_temp$val, word = c("university of tehran", "gorgan university of agricultural sciences & natural resources"))), 
+  "Southern Ireland Universities" = c(find_words(where = dat_temp$val, word = c("university college cork", "ollscoil na gaillimhe university of galway"))), 
+  "Jamaica Universities" = c(find_words(where = dat_temp$val, word = c("university west indies"))), 
+  "Japan Universities" = c(find_words(where = dat_temp$val, word = c("university of tokyo", "nagasaki university" , "kyoto university", "konan university" , "hokkaido university", "university of the ryukyus", "tokyo university", "tokushima bunri university", "tokai university", "okinawa institute of science & technology graduate university", "mie university", "ehime university", "kyushu university" ))), 
+  "Kenya Universities" = c(find_words(where = dat_temp$val, word = c("university of nairobi", "pwani university", "keio university" ))), 
+  "Latvia Universities" = c(find_words(where = dat_temp$val, word = c("university of latvia"))), 
+  "Malaysia Universities" = c(find_words(where = dat_temp$val, word = c("university of nottingham malaysia", "universiti malaya"))), 
+  "Mexico Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("universidad nacional autonoma de mexico", "universidad veracruzana", "el colegio de la frontera sur", "ecosur", "universidad autonoma de baja california", "instituto politecnico nacional  mexico", 
+                     "universidad de guadalajara", "universidad autonoma de sinaloa"))), 
+  "Morocco Universities" = c(find_words(where = dat_temp$val, word = c("cadi ayyad university of marrakech"))), 
+  "New Zealand Universities" = c(find_words(where = dat_temp$val, word = c("university of waikato", "university of otago", "university of canterbury", "university of auckland", "massey university"))),
+  "Netherlands Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("utrecht university", "vrije universiteit", "wageningen university", "University of Groningen"))), 
+  "Northern Ireland Universities" = c(find_words(where = dat_temp$val, word = c("ulster university", "queens university belfast" ))), 
+  "Norway Universities" = c(find_words(where = dat_temp$val, word = c("university of oslo", "university of bergen", "university of agder", "uit the arctic university of tromso", "nord university"))), 
+  "Nigeria Universities" = c(find_words(where = dat_temp$val, word = c("university of ibadan"))), 
+  "Pakistan Universities" = c(find_words(where = dat_temp$val, word = c("university of karachi", "government college university faisalabad"))), 
+  "Peru Universities" = c(find_words(where = dat_temp$val, word = c("universidad nacional federico villarreal"))), 
+  "Poland Universities" = c(find_words(where = dat_temp$val, word = c("wroclaw university"))),
+  "Portugal Universities" = c(find_words(where = dat_temp$val, word = 
+c("universidade dos acores", "universidade de coimbra", "universidade do porto", "universidade de aveiro", "university of tras os montes & alto douro", "universidade do algarve", "universidade de lisboa" ))), 
+  "Philippines Universities" = c(find_words(where = dat_temp$val, word = c("silliman university"))),
+  
+  "Senegal Universities" = c(find_words(where = dat_temp$val, word = c("university cheikh anta diop dakar", "universite gaston berger"))), 
+  "Scotland Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of gothenburg", "university of edinburgh", "university of st andrews", "university of aberdeen", "uhi millennium institute" , "heriot watt university", "university of stirling", "university of glasgow", "university of strathclyde"))),
+  "Spain Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of valencia", "university of basque country", "universitat de les illes balears" , "university of murcia", "universidade de santiago de compostela", "universidade da coruna","complutense university of madrid" ,"universitat politecnica de catalunya", "universidade de vigo", "universidad de huelva", "universidad rey juan carlos", "universidad de las palmas de gran canaria", "universidad de cadiz", "university of barcelona", "universitat d'alacant", "universitat de girona"))), 
+  "South Africa Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of the western cape", "university of kwazulu natal", "university of cape town", "rhodes university", "nelson mandela university"))), 
+  "South Korea Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("sunchon national university", "hanyang university", "seoul national university", "myongji university", 
+                     "pukyong national university", "jeju national university", "inha university"))), 
+  
+  "Saudi Arabia Universities" = c(find_words(where = dat_temp$val, word = c("king abdullah university of science & technology" , "king fahd university of petroleum & minerals", "king saud university" ))),
+  
+  "Sweden Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("university of gothenburg", "stockholm university", "swedish university of agricultural sciences", "linnaeus university"))), 
+  "Switzerland Universities" = c(find_words(where = dat_temp$val, word = c("university of zurich", "university of bern", "university of basel", "eth zurich"))),
+  "Tanzania Universities" = c(find_words(where = dat_temp$val, word = c("university of dar es salaam"))),
+  "Taiwan Universities" = c(find_words(where = dat_temp$val, word = c("national dong hwa university", "national taipei university of technology", "national taiwan ocean university", "national taiwan university", "national sun yat sen university"))),
+  "Tunisia Universities" = c(find_words(where = dat_temp$val, word = c("universite de sfax", "universite de tunis el manar", "faculte des sciences de tunis"))),
+  "Turkey Universities" = c(find_words(where = dat_temp$val, word = c("giresun university", "recep tayyip erdogan university", "middle east technical university", "mersin university", "antalya bilim university" ))),
+  "Thailad Universities" = c(find_words(where = dat_temp$val, word = c("kasetsart university"))),
+  "Uruguay Universities" = c(find_words(where = dat_temp$val, word = c("universidad de la republica, uruguay"))),
+  "United Arab Emirates Universities" = c(find_words(where = dat_temp$val, word = c("united arab emirates university"))),
+  "United Kingdom Universities" = 
+    c(find_words(where = dat_temp$val, word =  c("aberystwyth university", "university of westminster", "royal holloway university", "university of york", "university of oxford", "university of salford", "university of exeter", "loughborough university", "university of east anglia", "university of cambridge", "university of bath", "lancaster university", "university of leeds", "university of liverpool", "university of london", "swansea university", "bournemouth university", "university of hull", "university of kent", "university of bristol", "newcastle university", "university of sussex", "university of southampton", "university of sheffield", "newcastle university", "imperial college london"))),
+  "Virgin Islands Universities" = c(find_words(where = dat_temp$val, word = c("university of the virgin islands"))), 
+  
+  
+  # United States -------------
+  "NOAA" = c(find_words(where = dat_temp$val, word = c("National Oceanic and Atmospheric Administration", "NOAA", "(noaa)"))), 
+  "US Government" = c(find_words(where = dat_temp$val, word = c("US Government", "us ", "U.S.", "usa", "united states ", 
+                                                                "Tennessee Valley Authority", "pacific northwest national laboratory", 
+                                                                "nasa", "oak ridge national laboratory"))),   
+  "US Universities" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c(#"Universi", "College", 
+                     "virginia polytechnic institute & state university", "university of rhode island", "university of pennsylvania", "harvard", "university of san diego", "occidental college", "california state polytechnic university", "university of puerto rico", "university of north carolina", "university of north florida", "washington state university", "widener university", "university of plymouth",  "new college florida", "florida institute of technology", "university of toledo", "murray state university", "gulf of maine research institute", "william & mary", "woods hole oceanographic institution", "university of puerto rico", "wellesley college", "smith college", "monterey bay aquarium research institute", "massachusetts institute of technology", "talladega college", "virginia institute of marine science", "suny cobleskill", "oklahoma state university", "scripps", "atlantic technological university", "auburn university", "boston university", "ball state university", "california polytechnic state university", "california state university", "central connecticut state university", "clemson university", "colorado state university", "columbia university", "connecticut state university", "cornell university", "central michigan university", "duke university", "east carolina university", "pennsylvania state university", "florida atlantic university", "florida gulf coast university", "florida international university" , "florida state university", "george mason university", "harvard university", "idaho state university", "indiana university", "jacksonville university", "kansas state university", "skidaway institute of oceanography", "university of south alabama", "tulane university", "university of washington", "university of west florida", "university of wisconsin", "university system of georgia", "dartmouth college",  "university system of maryland", "university of birmingham", "university system of new hampshire", "university system of ohio", "stockton university", "university of texas", "university of tampa", "university of southern california", "san diego state university", "university of southern maine", "college of charleston", "university of southern mississippi", "northeastern university", "old dominion university", "louisiana state university", "michigan state university", "michigan technological university", "mississippi state university", "monmouth university", "montana state university", "university of new england", "university of new hampshire", "university of new mexico", "university of new orleans", "university of nevada", "university of miami", "university of michigan", "university of minnesota", "university of missouri", "university of montana", "university of massachusetts", "university of maryland", "university of maine", "university of idaho", "university of illinois", "university of iowa", "university of kansas", "university of hawaii", "university of guam", "university of georgia", "university of florida", "university of delaware", "university of colorado", "university of connecticut", "university of central florida", "university of louisiana", "university of louisville", "university of california", "rensselaer polytechnic institute", "university hawaii", "university massachusetts", "texas a&m university", "texas state university", "texas tech university", "state university of new york", "state university system of florida", "stanford university", "sam houston state university", "rutgers university", "princeton university", "california institute of technology", "purdue university", "south dakota state university", "savannah state university", "ohio state university", "oregon state university", "pennsylvania state university", "portland state university","oklahoma state university", "northern kentucky university", "north carolina state university", "new mexico state university", "university of alaska", "university of alaska", "university of south carolina", "university of south carolina", "university of south florida" ))), 
+  
+  "US State Government" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("Alaska Department of Fish ", "massachusetts division of marine fisheries", "adfg", "washington department of fish & wildlife", "wdfw", "national centers for coastal ocean science", "minnesota department of natural resources", "illinois natural history survey", "southern california coastal water research project", "florida fish & wildlife conservation commission", "idaho"))), 
+  
+  "US Research Societies and Institutes" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("mote marine laboratory & aquarium", "moss landing marine laboratories", "nerc national oceanography centre", "naval research laboratory", "national center for ecological analysis & synthesis", "harbor branch oceanographic institute foundation"))), 
+  
+  "US Museums and Education" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("california academy of sciences", "dauphin island sea lab", "smithsonian", 
+                     "nevada system of higher education", 
+                     "pennsylvania commonwealth system of higher education"))),
+  
+  "Australia Government" = 
+    c(find_words(where = dat_temp$val, 
+                 word = c("Australia", "csiro", "antarctic climate & ecosystems cooperative research centre", "sa water", "nsw department of primary industries", "victorian department of environment & primary industries", "melbourne", "sydney", "department of economic development, jobs, transport & resources, department of environment", "department of economic development, jobs, transport & resources", "arc centre of excellence for coral reef studies", "department for environment & water", "queensland"))), 
+  "Austria Government" = c(find_words(where = dat_temp$val, word = c("university of vienna"))),
+  "Argentinia Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("national fisheries research & development institute", "instituto antartico argentino", "instituto de astronomia y fisica del espacio", "comision de investigaciones cientificas"))), 
+  "Argentinia Government" = c(find_words(where = dat_temp$val, word = c("consejo nacional de investigaciones cientificas y tecnicas", "centro nacional patagonico", "cenpat", "national fisheries research & development institute (inidep)"))),
+  
+  "Azerbaijan Government" = c(find_words(where = dat_temp$val, word = c("azerbaijan"))),
+  "Bulgaria Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("bulgarian academy of sciences"))),
+  "Canada Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("bedford institute of oceanography"))), 
+  "Canada Government" = c(find_words(where = dat_temp$val, word = c(#"Canada", "Canadian",
+    "ministry of natural resources", "agriculture & agri food canada", "environment & climate change canada", "canadian wildlife service", "fisheries & oceans canada"))), 
+  
+  "Chile Research Societies and Institutes" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("instituto de fomento pesquero"))), 
+  "China Research Societies and Institutes" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("chengdu institute", "southern marine science & engineering guangdong laboratory", "kunming institute of zoology", "national engineering research center for oceanic fisheries", "fishery machinery & instrument research institute", "institute of geochemistry, cas", "institute of hydrobiology, cas", "guangdong laboratory", "yangtze river fisheries research institute", "yellow sea fisheries research institute", "institute of oceanology, cas", ", cafs", ", cas", "beijing genomics institute", "chinese academy of fishery sciences", "chinese academy of sciences", "laoshan laboratory"))),
+  "China Government" =
+    c(find_words(where = dat_temp$val, word = c("ministry of agriculture & rural affairs"))),
+  
+  "Croatia Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("croatian institute of oceanography & fisheries"))),
+  
+  "Czechia Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("research institute for soil & water conservation czech republic", "czech academy of sciences"))),
+  
+  "Denmark Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("faroe marine research institute", "greenland institute of natural resources"))),
+  # "Finnish Government" = c(find_words(where = dat_temp$val, word = c("finland", "finnish"))),
+  "France Museums and Education" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("museum national d'histoire naturelle"))),   
+  "France Research Societies and Institutes" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("cnrs", "cirad", "institut universitaire europeen de la mer", "institut agro", "institut de recherche pour le developpement", "ifremer", "national institute for earth sciences & astronomy", "inria",  "inrae", "institut national des sciences et technologies de la mer"))), 
+
+  "France Government" = c(find_words(where = dat_temp$val, word = c("office francais de la biodiversite", "ofb"))),
+  "Finland Government" = c(find_words(where = dat_temp$val, word = c("geological survey of finland"))),
+  "Finland Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("natural resources institute finland", "finnish environment institute"))),
+
+  "Germany Research Societies and Institutes" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("senckenberg gesellschaft fur naturforschung", "leibniz zentrum fur marine tropenforschung", "leibniz institut", "johann heinrich von thunen institute", "helmholtz zentrum hereon", "helmholtz association"))),
+  "Germany Research Societies and Institutes" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("alfred wegener institute", "helmholtz"))),
+  "Greece Government" =
+    c(find_words(where = dat_temp$val, word =
+                   c("hellenic centre for marine research"))),
+  "Iceland Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("marine & freshwater research institute"))), 
+  "Indonesia Government" = c(find_words(where = dat_temp$val, word = c("ministry of marine affairs and fisheries"))), 
+  "India Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("tata institute of fundamental research", "centre for marine living resources & ecology", "cmlre", "central marine fisheries research institute", "national centre for biological sciences", "central coastal agricultural research institute"))), 
+  "India Government" = c(find_words(where = dat_temp$val, word = c("ministry of earth sciences", "zoological survey of india", "indian council of agricultural research"))), 
+  "Southern Ireland Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("marine institute ireland"))),
+  "Southern Ireland Government" = c(find_words(where = dat_temp$val, word = c("agri food & biosciences institute"))),
+  "Italy Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c(
+    "istituto di neuroscienze", "istituto di scienze marine", "istituto di studi sul mediterraneo", "istituto nazionale di oceanografia e di geofisica sperimentale", "istituto per le risorse biologiche biotecnologie marine", "consiglio per la ricerca in agricoltura e l'analisi dell'economia agraria (crea)", "istituto per lo studio degli impatti antropici sostenibilita in ambiente marino", "consiglio per la ricerca in agricoltura e l'analisi dell'economia agraria", "italian institute for environmental protection & research", "l'istituto per l'ambiente marino costiero", "italian institute for environmental protection & research", "istituto per le risorse biologiche biotecnologie marine", "consiglio nazionale delle ricerche", "l'istituto per l'ambiente marino costiero", "ec jrc ispra site", "conisma", "stazione zoologica anton dohrn di napoli"))),
+  "Italy Government" = c(find_words(where = dat_temp$val, word = c("regional environmental protection agency italy"))),
+  # "Jamaica Government" = c(find_words(where = dat_temp$val, word = c("Jamaica"))), 
+  "Japan Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("research organization of information & systems", "national institute of advanced industrial science & technology", "national institute for environmental studies japan", "japan agency for marine earth science & technology (jamstec)", "japan fisheries research & education agency", "japan international research center for agricultural sciences", "national institute of genetics"))), 
+  "Japan Government" = c(find_words(where = dat_temp$val, word = c("japan fisheries research & education agency (fra)", "japan agency for marine earth science & technology"))),
+  "Latvia Government" = c(find_words(where = dat_temp$val, word = c("animal health & environment bior"))),
+  "Lithuania Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("nature research center lithuania"))),
+  # "Lithuania Government" = c(find_words(where = dat_temp$val, word = c("lithuania"))),
+  "Mexico Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("centro de investigaciones biologicas del noroeste", "cibnor", "centro de investigacion en alimentacion y desarrollo", "instituto politecnico nacional mexico", "cicese centro de investigacion cientifica y de educacion superior de ensenada"))),
+  "Mongolia Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("mongolian academy of sciences"))), 
+
+  "New Zealand Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("national institute of water & atmospheric research", "niwa"))),
+  "Netherlands Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("royal netherlands institute for sea research", "nioz", "royal netherlands academy of arts & sciences", "netherlands institute of ecology", "nioo knaw"))), 
+  "Netherlands Government" = c(find_words(where = dat_temp$val, word = c("naturalis biodiversity center"))),  
+  "Norway Government" = c(find_words(where = dat_temp$val, word = c("geological survey of norway"))),  
+  "Norway Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("bjerknes centre for climate research", "norwegian research centre", "norce", "norwegian institute for water research", "niva", "norwegian institute nature research", "norwegian polar institute", "institute of marine research norway"))),
+  "Peru Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("instituto del mar del peru"))),
+  "Portugal Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("instituto de telecomunicacoes", "instituto superior psicologia aplicada"))),
+  "Poland Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("national marine fisheries research institute", "polish academy of sciences"))),
+  # "Polish Government" = c(find_words(where = dat_temp$val, word = c("poland", "polish"))),
+  "Romania Government" = c(find_words(where = dat_temp$val, word = c("national institute for marine research & development grigore antipa", "baikal institute of nature management"))),
+  "Russia Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("research lnstitute of fisheries & oceanography", "tinro", "papanin institute for biology of inland waters", "shirshov institute of oceanology"))), 
+  # "Russian Government" = c(find_words(where = dat_temp$val, word = c("Russia", "baikal", "Shirshov"))), 
+  "Scotland Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("james hutton institute", "marine scotland science"))),
+  "South Africa Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("south african institute for aquatic biodiversity", "south african national biodiversity institute", "south african environmental observation network", "saeon"))),
+  "South Africa Government" = c(find_words(where = dat_temp$val, word = c("national research foundation south africa", "department of environment, forestry & fisheries"))),
+  "South Korea Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("national institute of fisheries science", "korea environment institute", "korea polar research institute"))),
+  # "South Korea Government" = c(find_words(where = dat_temp$val, word = c("korea"))),  
+  "Spain Government" = c(find_words(where = dat_temp$val, word = c("csic", "centro mediterraneo de investigaciones marinas y ambientales", "cmima", "spanish"))), 
+  # "Switzerland Government" = c(find_words(where = dat_temp$val, word = c("zurich", "Switzerland"))),
+  "Sweden Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("beijer institute of ecological economics", "swedish meteorological & hydrological institute", "royal swedish academy of sciences"))),
+  "Sweden Museums and Education" = c(find_words(where = dat_temp$val, word = c("swedish museum of natural history"))),
+  "Sweden Government" = c(find_words(where = dat_temp$val, word = c("swiss federal institutes of technology domain"))),
+  "Taiwan Museums and Education" = c(find_words(where = dat_temp$val, word = c("national museum of marine biology & aquarium"))),
+  "Taiwan Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("taiwan fish research institute"))),
+  "Turkey Government" = c(find_words(where = dat_temp$val, word = c("maritime & communications turkey", "agriculture & livestock turkey"))),
+  # "United Kingdom Government" = c(find_words(where = dat_temp$val, word = c())),
+  "United Kingdom Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("natural environment research council", "institute of biological, environmental, rural & sciences",  "ibers", "marine biological association united kingdom", "biotechnology and biological sciences research council", "centre for environment fisheries & aquaculture science", "zoological society of london", "uk research & innovation", "ukri", "nerc british geological survey", "marine biological association united kingdom", "nerc british antarctic survey"))),
+  # "UK Government" = c(find_words(where = dat_temp$val, word = c("UK", "U.K.", "united kingdom", "london", "british"))),
+  
+  "Not-for-Profit" = 
+    c(find_words(where = dat_temp$val, 
+                 word = c("deltares", "bigelow laboratory for ocean sciences", "national geographic society", "battelle memorial institute", "plymouth marine laboratory", "national academies of sciences", "nature conservancy", "wildlife conservation society", "environmental defense fund", "national council for air & stream improvement", "cgiar", "world wildlife fund", "worldfish"))),
+  "Private Data and Research Consulting" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("western ecosystems technology, inc."))),  
+  "Private Food Industry" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("ajinomoto co inc", "suntory holdings"))),  
+  "Private Saftey and Security Industry" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("consolidated safety services, inc.", "l3harris technologies", "johnson controls incorporated"))),  
+  "Private Industry" = 
+    c(find_words(where = dat_temp$val, 
+                 word = c("Shell", "dupont", "telefonica sa", 
+                          "weyerhaeuser company"))),
+  "Private Research and Consulting" = 
+    c(find_words(where = dat_temp$val, 
+                 word = c("industrial economics, incorporated", "ic independent consulting", "earth resources technology inc", "fishwell consulting"))),
+
+  "International governance" = 
+    c(find_words(where = dat_temp$val, word = 
+                   c("The World Bank", "european commission joint research centre", "azti", "food & agriculture organization of the united nations", "fao"))))
+
+aaa <- data_condense(dat_descr, variable = "affiliations", list0, list_as_is = TRUE, append = "_cond1")
+
+dat_descr <- aaa$dat_descr
+
+# Create condensed affiliation categories (part 2) -------------------------------------
+
+list0 <- list(
+  "Medical" = "Medical", 
+  # "US Government" = c("US Government", "NOAA"), 
+  "Universities" = names(list00)[grepl(pattern = "Universities", x = names(list00), ignore.case = TRUE)], 
+  "National Government" = c(names(list00)[grepl(pattern = "Government", x = names(list00), ignore.case = TRUE)], "NOAA"),
+  "Research Societies and Institutes" = names(list00)[grepl(pattern = "Research Societies and Institutes", x = names(list00), ignore.case = TRUE)],
+  "Museums and Education" = names(list00)[grepl(pattern = "Museums and Education", x = names(list00), ignore.case = TRUE)],
+  "Not-for-Profit" = names(list00)[grepl(pattern = "Private", x = names(list00), ignore.case = TRUE)],
+  "Private Industry" = names(list00)[grepl(pattern = "Private", x = names(list00), ignore.case = TRUE)],
+  "International governance" = "International governance"
+)
+
+aaa <- data_condense(dat_descr, variable = "affiliations_cond1", list0, list_as_is = TRUE, append = "_cond2")
+
+dat_descr <- aaa$dat_descr
+
+# Create condensed affiliation categories (part 3) -------------------------------------
+
+a <- names(list00)
+a <- gsub(x = a, replacement = "", ignore.case = TRUE, pattern = "Universities")
+a <- gsub(x = a, replacement = "US", ignore.case = TRUE, pattern = "NOAA")
+a <- gsub(x = a, replacement = "", ignore.case = TRUE, pattern = "State")
+a <- gsub(x = a, replacement = "", ignore.case = TRUE, pattern = "Government")
+a <- gsub(x = a, replacement = "", ignore.case = TRUE, pattern = "Research Societies and Institutes")
+a <- gsub(x = a, replacement = "", ignore.case = TRUE, pattern = "Museums and Education")
+a <- gsub(x = a, replacement = "", ignore.case = TRUE, pattern = "governance")
+a[grepl(pattern = "Private", x = a, ignore.case = TRUE)] <- "Private"
+a <- sort(unique(trimws(a)))
+
+list0 <- list()
+for (i in 1:length(a)) {
+  list0$temp <- unique(dat_descr$val[dat_descr$var == "affiliations_cond1"][grepl(pattern = a[i], x = dat_descr$val[dat_descr$var == "affiliations_cond1"])])
+  names(list0)[names(list0) == "temp"] <- a[i]
+}
+
+aaa <- data_condense(dat_descr, variable = "affiliations_cond1", list0, list_as_is = TRUE, append = "_cond3")
+
+dat_descr <- aaa$dat_descr
+
+```
+
+
+# Analaysis summary
+
+We conducted a literature review using the web of science citation system (search query: <https://www.webofscience.com/wos/woscc/summary/7f060455-0bd6-4643-bd2f-2de3ceedb0b2-f52da389/relevance/1>). To be included in this analysis, each paper had to contain a long-term fisheries survey or pilot study of a new study Our search returned `r format(x = nrow(dat), big.mark = ",")` entries, of which contained `r format(x = nrow(dat[dat$include == "DUPLICATE" & !is.na(dat$include),]), big.mark = ",")` duplicate results and `r format(x = nrow(dat[dat$include == "NO" & !is.na(dat$include),]), big.mark = ",")` irrelevant results, leaving `r format(x = nrow(dat[dat$include == "YES" & !is.na(dat$include),]), big.mark = ",")` relevant articles to categorize. The following categories were used in this analysis: 
+
+
+```{r}
+temp <- function(dat_descr, var, collapse = ", ") {
+  temp <- paste0(sort(unique(dat_descr$val[dat_descr$var == var & 
+                                             !is.na(dat_descr$var)])), 
+                 collapse = collapse)
+  return(temp)
+}
+```
+
+
+
+**Gear Type**: 
+`r temp(dat_descr = dat_descr, var = "gear_type")`
+
+**Research topic**: 
+`r temp(dat_descr = dat_descr, var = "research_field")`
+
+**Location**: 
+`r temp(dat_descr = dat_descr, var = "location")`
+
+**Survey**: 
+`r temp(dat_descr = dat_descr, var = "survey", collapse = "; \n")`
+
+**Organism focus**: 
+`r temp(dat_descr = dat_descr, var = "organism")`
+
+<!-- figure_print base (just for making following plots consistent) -->
+
+# Analysis on categories
+
+
+```{r figure_print-base, include = FALSE}
+figure_base <- ggplot2::ggplot()  +
+  theme_bw()  +
+  ggplot2::theme(
+    panel.border = element_rect(colour = "grey50", fill=NA, linewidth=.5),
+    plot.margin=unit(c(0,0,0,0), "cm") ,
+    panel.background = element_rect(fill = "white"), #grey95
+    legend.position="bottom",
+    legend.text = element_text(size = 5),
+    legend.direction="horizontal",
+    legend.justification="left",
+    legend.background = element_blank(),
+    legend.location = "right", 
+    legend.key.spacing = unit(0.0010, 'cm'),
+    legend.box.background = element_blank())
+
+world_coordinates <- maps::map("world", plot = FALSE, fill = TRUE) %>%
+  sf::st_as_sf() 
+```
+
+```{r auto-plot, include = FALSE}
+auto_plot <- function(dat1, variable, other_cutoff = 0) {
+  
+  title0 <- paste0("Frequency and year, by ", gsub(pattern = "_", replacement = " ", x = variable))
+  title0_cum <- paste0("Cummulative frequency and year, by ", gsub(pattern = "_", replacement = " ", x = variable))
+  
+  
+  # make data wrangling easier -------------------------------------------------
+  dat0 <- dat1  %>% 
+    dplyr::filter(var == variable) %>% 
+    dplyr::select(publication_year, val, var) %>% 
+    dplyr::filter(!is.na(val))
+  
+  # get totals for whole timeseries --------------------------------------------
+  dat_total <- dat0 %>% 
+    dplyr::left_join(
+      dat0 %>% 
+        dplyr::group_by(val) %>% 
+        dplyr::summarise(freq = n()) %>% 
+        dplyr::ungroup() %>%
+        dplyr::arrange(desc(freq)) %>%
+        dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) ) %>% 
+    dplyr::group_by(val) %>% 
+    dplyr::summarise(freq = n()) %>% 
+    dplyr::ungroup() %>%
+    dplyr::arrange(desc(freq)) %>% 
+    dplyr::filter(!is.na(val)) %>% 
+    dplyr::mutate(val1 = paste0(val, " (", freq, ")"))
+  
+  dat_total$val1 <- factor(x = dat_total$val1,
+                           levels = unique(dat_total$val1), 
+                           labels = unique(dat_total$val1), 
+                           ordered = TRUE)
+  
+  # prepare frequency data for each year ---------------------------------------
+  dat_total_by_year <- dat0 %>%
+    dplyr::left_join(dat0 %>% # freq data for whole time series in paren
+                       dplyr::group_by(val) %>%                   
+                       dplyr::summarise(freq = n()) %>%
+                       dplyr::ungroup() %>%
+                       dplyr::arrange(desc(freq)) %>%
+                       dplyr::mutate(val = ifelse(
+                         freq <= other_cutoff, "Other", val))) %>%
+    dplyr::group_by(publication_year, val) %>%
+    dplyr::summarise(freq = n()) %>%
+    dplyr::ungroup() %>%
+    dplyr::arrange(desc(freq))  %>%
+    dplyr::filter(!is.na(val)) %>%
+    dplyr::left_join(dat_total %>%
+                       dplyr::select(-freq)) %>% 
+    dplyr::arrange(publication_year) %>% 
+    dplyr::group_by(val) %>%
+    dplyr::mutate(cum_freq = cumsum(freq)) %>%
+    dplyr::ungroup() 
+  
+  # line plot ------------------------------------------------------------------
+  figure_line <- figure_base + 
+    ggplot2::geom_line(
+      data = dat_total_by_year, 
+      # show.legend = FALSE, 
+      mapping = aes(x = publication_year, 
+                    y = freq, 
+                    color = val1), 
+      linewidth = .75) + 
+    ggplot2::scale_color_viridis_d(name = "", option = "turbo", begin = .1, end = .7,
+                                   direction = -1) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0) 
+  
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0( variable,"-line.png")),
+         plot = figure_line, width = 6.5, height = 8)
+  
+  # bar plot -------------------------------------------------------------------
+  figure_bar <- figure_base + 
+    ggplot2::geom_bar(data = dat_total_by_year, 
+                      mapping = aes(x = publication_year,
+                                    y = freq,
+                                    fill=val1,
+                                    color = val1),
+                      position="stack",
+                      stat="identity",
+                      alpha = .5,
+                      linewidth = .75) + 
+    ggplot2::scale_color_viridis_d(name = "", option = "turbo", begin = .1, end = .7,
+                                   direction = -1) + 
+    ggplot2::scale_fill_viridis_d(name = "", option = "turbo", begin = .1, end = .7,
+                                  direction = -1) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0) 
+  
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0(variable,"-bar.png")),
+         plot = figure_bar, width = 6.5, height = 8)
+  
+  # area plot ----------------------------------------------------------------
+  figure_area <- figure_base + 
+    ggplot2::geom_area(data = dat_total_by_year, 
+                       mapping = aes(x = publication_year,
+                                     y = freq,
+                                     fill=val1)
+                       # ,alpha = .5,
+                       # size = .75) 
+    )+ 
+    ggplot2::scale_color_viridis_d(name = "", option = "turbo", begin = .1, end = .7,
+                                   direction = -1) + 
+    ggplot2::scale_fill_viridis_d(name = "", option = "turbo", begin = .1, end = .7,
+                                  direction = -1) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0) 
+  
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0(variable,"-area.png")),
+         plot = figure_area, width = 6.5, height = 8)
+  
+  # cumline plot ---------------------------------------------------------------
+  
+  figure_cumline <- figure_base + 
+    ggplot2::geom_line(data = dat_total_by_year,
+                       mapping = aes(x = publication_year,
+                                     y = cum_freq,
+                                     color = val1),
+                       linewidth = .75) +
+    ggplot2::scale_color_viridis_d(name = "", option = "turbo", begin = .1, end = .7,
+                                   direction = -1) + 
+    ggplot2::scale_fill_viridis_d(name = "", option = "turbo", begin = .1, end = .7,
+                                  direction = -1) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0_cum) 
+  
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0(variable,"-cumline.png")),
+         plot = figure_cumline, width = 6.5, height = 8)
+  
+  # cumbar plot ---------------------------------------------------------------
+  figure_cumbar <- figure_base + 
+    ggplot2::geom_bar(data = dat_total_by_year, 
+                      mapping = aes(x = publication_year,
+                                    y = cum_freq,
+                                    fill=val1,
+                                    color = val1),
+                      position="stack",
+                      stat="identity",
+                      alpha = .5,
+                      size = .75) +
+    ggplot2::scale_color_viridis_d(name = "", option = "turbo", begin = .1, end = .7,
+                                   direction = -1) + 
+    ggplot2::scale_fill_viridis_d(name = "", option = "turbo", begin = .1, end = .7,
+                                  direction = -1) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0_cum) 
+  
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0(variable, "-cumbar.png")),
+         plot = figure_cumbar, width = 6.5, height = 8)
+  
+  # cumarea plot ---------------------------------------------------------------
+  figure_cumarea <- figure_base + 
+    ggplot2::geom_area(data = dat_total_by_year, 
+                       mapping = aes(x = publication_year,
+                                     y = cum_freq,
+                                     fill=val1)
+                       # ,alpha = .5,
+                       # size = .75) 
+    )+ 
+    ggplot2::scale_color_viridis_d(name = "", option = "turbo", begin = .1, end = .7,
+                                   direction = -1) + 
+    ggplot2::scale_fill_viridis_d(name = "", option = "turbo", begin = .1, end = .7,
+                                  direction = -1) + 
+    xlab("Year") +
+    ylab("Frequency") +
+    ggtitle(title0_cum) 
+  
+  ggsave(filename = here::here("docs/index_files/figure-html/", paste0(variable,"-cumarea.png")),
+         plot = figure_cumarea, width = 6.5, height = 8)
+  
+  # frequency table ------------------------------------------------------------
+  
+  dat_total <- dat_total %>%
+    dplyr::arrange(val) %>%
+    dplyr::arrange(desc(freq)) %>% 
+    dplyr::select(-val1) %>% 
+    dplyr::rename("Category" = val, 
+                  "Frequency" = freq)
+  
+  dat_print <- dat_total %>% 
+    flextable::flextable() %>%
+    flextable::theme_zebra() %>%
+    flextable::width(width = c(5, 1))
+  
+  return(list("line_plot" = figure_line, 
+              "bar_plot" = figure_bar,
+              "area_plot" = figure_area,
+              "cumline_plot" = figure_cumline,
+              "cumbar_plot" = figure_cumbar,
+              "cumarea_plot" = figure_cumarea,
+              "table_print" = dat_print, 
+              "table_raw" = dat_total))
+}
+```
+
+```{r run-child, results = 'asis'}
+
+temp <- sort(unique(dat_descr$var))
+temp <- temp[!(temp %in% c("affiliations", "keywords"))]
+
+src <- list()
+for (var0 in temp){
+  src[[var0]] <- knitr::knit_expand(here::here('docs/index_child.qmd'))
+}
+```
+
+
+`r paste(knitr::knit(text = unlist(src)), collapse = '\n')`
+
+
+
+```{r}
+
+
+
+
+```
+
+
+# R Version Metadata
+
+
+```{r}
+sessionInfo()
+```
+
