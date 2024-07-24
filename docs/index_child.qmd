@@ -5,10 +5,10 @@
 
 var00 <- gsub(pattern = "_", replacement = " ", x = "{{var0}}")
 var000 <- "{{var0}}"
-
+other_cutoff <- ifelse(length(unique(dat_descr$val[dat_descr$var == var000]))>20, 5, 0)
 aaa <- auto_plot(dat1 = dat_descr, 
-                 variable = "{{var0}}", 
-                 other_cutoff = 0)
+                 variable = var000, 
+                 other_cutoff = other_cutoff)
 ```
 
 ## `r stringr::str_to_title(var00)`
@@ -17,7 +17,7 @@ aaa <- auto_plot(dat1 = dat_descr,
 
 ```{r}
 #| label: {{var0}}-line
-#| fig-cap: !expr paste0("Line plot of frequency and year, by ", var00)
+#| fig-cap: !expr paste0("Line plot of frequency and year, by ", var00, ". ")
 
 knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste0("{{var0}}-line.png")))
 ```
@@ -69,51 +69,47 @@ knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste
 
 ### Word Cloud
 
-```{r}
+```{r, fig.height=6, fig.width=6}
 #| label: {{var0}}-wordcloud
-#| tbl-cap: "Word cloud plot of keyword "
+#| fig-cap: "Word cloud plot of keyword. "
 
-# https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a
-# install.packages("wordcloud")
-library(wordcloud)
-# install.packages("RColorBrewer")
-library(RColorBrewer)
-# install.packages("wordcloud2")
-library(wordcloud2)
+dat_total <- aaa$table_raw
 
-dat2 <- aaa$table_raw
-
-figure_print <- wordcloud(words = dat2$Category, 
-                          freq = dat2$Frequency, 
-                          min.freq = 1,
-                          max.words=200, 
-                          random.order=FALSE, 
-                          rot.per=0.35,
-                          colors=brewer.pal(8, "Dark2"))
-
-ggsave(filename = here::here("docs/index_files/figure-html/", paste0("{{var0}}-wordcloud.png")),
-       plot = figure_print, width = 6, height = 6)
-
-# knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste0("{{var0}}-wordcloud.png")))
+wordcloud::wordcloud(
+    words = dat_total$Category, 
+    freq = dat_total$Frequency, 
+    min.freq = 1,
+    max.words = 50,
+    random.order = FALSE,
+    rot.per = 0.35,
+    colors = viridis::viridis_pal(option = "turbo")(8))
+  
+  # ggsave(filename = here::here("docs/index_files/figure-html/", 
+  #                              paste0(variable, "-wordcloud.png")),
+  #        plot = figure_wordcloud, width = 6, height = 6)
 ```
 
 `r ifelse(("{{var0}}" %in% c("location", "location_condensed")), paste0("### Map"), "")`
 
 ```{r, eval = ("{{var0}}" %in% c("location", "location_condensed"))}
 #| label: {{var0}}-map-1
-#| tbl-cap: !expr paste0("Map of ", var00," where size is representitve of the number of publications about that area. ")
+#| fig-cap: !expr paste0("Map of ", var00," where size is representitve of the number of publications about that area. ")
+
+dat_total <- aaa$table_raw
 
 dat2 <- classifiers %>% 
-  dplyr::filter(var == "{{var0}}") %>% 
+  dplyr::filter(var == var000) %>% 
   dplyr::filter(!is.na(val_lat)) %>% 
   dplyr::select(val, 
                 lat = val_lat, 
                 lon = val_lon) %>% 
-  dplyr::right_join(aaa$table_raw %>% 
+  dplyr::right_join(dat_total %>% 
                      dplyr::rename(val = Category)) %>% 
   dplyr::arrange(desc(Frequency)) %>% 
   dplyr::mutate(val_label = paste0(val, " (", Frequency, ")"), 
-                val_label = factor(x = val_label, levels = val_label, labels = val_label, ordered = TRUE)) %>%
+                val_label = factor(x = val_label, levels = val_label, labels = val_label, ordered = TRUE), 
+                lon = ifelse(is.na(lon), 0, lon), 
+                lat = ifelse(is.na(lat), 0, lat)) %>%
   sf::st_as_sf(coords = c("lon", "lat"),
                crs = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0") 
 
@@ -145,7 +141,7 @@ knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste
 
 ```{r, eval = ("{{var0}}" %in% c("location", "location_condensed"))}
 #| label: {{var0}}-map-2
-#| tbl-cap: !expr paste0("Map of ", var00," where size is representitve of the number of publications about that area. ")
+#| fig-cap: !expr paste0("Map of ", var00," where size is representitve of the number of publications about that area. ")
 
 figure_print <- figure_base +
   ggplot2::geom_sf(
@@ -179,9 +175,8 @@ knitr::include_graphics(path = here::here("docs/index_files/figure-html/", paste
 
 ### Summary table
 
-```{r}
+```{r, tab.cap = paste0("Summary table depicting frequency and year, by ", var00, ". Color key: green represents slopes > 1; red represents slopes < -1; blue represents slopes between 1 and -1. ") }
 #| label: {{var0}}-table
-#| tbl-cap: !expr paste0("Summary table depicting frequency and year, by ", var00)
 
 aaa$table_print
 ```

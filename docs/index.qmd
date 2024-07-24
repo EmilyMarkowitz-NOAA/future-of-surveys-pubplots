@@ -44,9 +44,12 @@ knitr::opts_chunk$set(
 ```
 
 ```{r load-libraries, include = FALSE}
-PKG <- c("devtools", "googledrive", "ggplot2", 
+# https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a
+
+PKG <- c("devtools", "googledrive", "ggplot2", "flextable", 
          "magrittr", "here", "dplyr", "sf", "readxl", 
-         "janitor", "stringr")
+         "janitor", "stringr", "wordcloud", "wordcloud2")
+
 for (p in PKG) {
   if(!require(p,character.only = TRUE)) {  
     install.packages(p, verbose = FALSE)
@@ -88,9 +91,14 @@ paste0('val %in% ',
   
   dat_descr <- dplyr::bind_rows(dat_descr, dat_temp)
   
+  groups <- data.frame()
+  
+  # groups <-
+  
   return(list("dat_descr" = dat_descr, 
               "dat_temp" = dat_temp, 
-              "str0" = str0))
+              "str0" = str0, 
+              "groups" = groups))
 }
 
 
@@ -108,16 +116,16 @@ find_words <- function(word, where) {
 # Download google spreadsheet --------------------------------------------------
 googledrive_dl <- "https://docs.google.com/spreadsheets/d/1l6a9Wb3M1PQV9UwHk7Ddfiiuq5U5lVW5"
 if (FALSE) {
-# SIGN INTO GOOGLE DRIVE--------------------------------------------------------
-googledrive_dl <- TRUE
-googledrive::drive_deauth()
-googledrive::drive_auth()
-2
-
-googledrive::drive_download(file = googledrive::as_id(googledrive_dl),  #"gap_survey_progression.csv",
-                            # type = "xlsx", 
-                            overwrite = TRUE, 
-                            path = here::here("data/data.xlsx"))
+  # SIGN INTO GOOGLE DRIVE--------------------------------------------------------
+  googledrive_dl <- TRUE
+  googledrive::drive_deauth()
+  googledrive::drive_auth()
+  2
+  
+  googledrive::drive_download(file = googledrive::as_id(googledrive_dl),  #"gap_survey_progression.csv",
+                              # type = "xlsx", 
+                              overwrite = TRUE, 
+                              path = here::here("data/data.xlsx"))
 }
 
 ```
@@ -289,12 +297,12 @@ dat_descr <- dplyr::bind_rows(
                      dplyr::filter(include == "YES") %>% 
                      dplyr::select(orig_order, publication_year, val = source_title) %>% 
                      dplyr::mutate(var = "source_title")) %>% 
-dplyr::mutate(
-      val = trimws(val), 
-      val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE), 
-      val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE), 
-      val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE))
-  
+  dplyr::mutate(
+    val = trimws(val), 
+    val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE), 
+    val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE), 
+    val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE))
+
 # Research field condensed -----------------------------------------------------
 
 list0 <- list(
@@ -320,6 +328,7 @@ list0 <- list(
 
 aaa <- data_condense(dat_descr, variable = "research_field", list0)
 dat_descr <- aaa$dat_descr
+aaa$groups
 
 # Gear type condensed ----------------------------------------------------------
 
@@ -345,6 +354,7 @@ list0 <- list(
 
 aaa <- data_condense(dat_descr, variable = "gear_type", list0, list_as_is = TRUE)
 dat_descr <- aaa$dat_descr
+aaa$groups
 
 # location condensed -----------------------------------------------------------
 
@@ -430,9 +440,9 @@ list0 <- list(
   # Survey types ---------------
   "Longline" = 
     c(find_words(where = dat_temp$val, word = c("longlin"))), 
-  "BTS" = 
+  "Bottom trawl survey" = 
     c(find_words(where = dat_temp$val, word = c("bottom trawl"))), 
-  "ATS" =
+  "Acoustic trawl survey" =
     c(find_words(where = dat_temp$val, word = c("acoustic", "echo", "sonar", "target strength", "esp3"))), 
   "Ring nets" = 
     c(find_words(where = dat_temp$val, word = c("ring nets"))), 
@@ -766,16 +776,16 @@ list0 <- list(
   "Survey phrases" = c(find_words(where = dat_temp$val, word = c("survey", "calcofi", "cgfs", "medits", "field study"))) 
 )
 
-aaa <- data_condense(dat_descr, variable = "keywords", list0, append = "cond1")
+aaa <- data_condense(dat_descr, variable = "keywords", list0, append = "_cond1")
 
 dat_descr <- aaa$dat_descr
-
+aaa$groups
 ### Create key word categories -------------------------------------------------
 
 # temp <- sort(unique(dat_temp$val))
 
 list0 <- list(
-  "Mobile gear" = c("Longline", "BTS", "ATS", "Ring nets", "Hook and Line", "net", "Survey phrases", "Trawl phrases"), 
+  "Mobile gear" = c("Longline", "Bottom trawl survey", "Acoustic trawl survey", "Ring nets", "Hook and Line", "net", "Survey phrases", "Trawl phrases"), 
   "Stationary gear" = c("Trap"), 
   "Advanced technology" = c("aerial", "camera", "Emerging technology", "USV"),                    
   "Socio-economics" = c("Socio-economics"), 
@@ -801,11 +811,12 @@ list0 <- list(
   "Places" = "Place Phrases", 
   "Vessel" = "Vessel",
   "Research" = c("Article phrases", "Samples")
-  )
+)
 
 aaa <- data_condense(dat_descr, variable = "keywords_cond1", list0, append = "cond2")
 
 dat_descr <- aaa$dat_descr
+aaa$groups
 
 # Clean Affiliation data -------------------------------------------------------
 
@@ -849,8 +860,8 @@ list0 <- list00 <- list(
   "Argentina Universities" = c(find_words(where = dat_temp$val, word = c("universidad de cordoba", "national university of mar del plata", "university of palermo", "university of buenos aires", "universidad nacional del comahue"))), 
   "Belgium Universities" = c(find_words(where = dat_temp$val, word = c("ku leuven", "universite libre de bruxelles", "ghent university" ))), 
   "Brazil Universities" = c(find_words(where = dat_temp$val, word = c("universidade federal rural de pernambuco", "universidade federal de alagoas", "universidade federal de pernambuco", "universidade federal de sergipe", "universidade federal do espirito santo", "universidade federal do para", "universidade federal do parana" , "universidade federal do rio grande", "universidade federal rural da amazonia", "universidade federal rural de pernambuco (ufrpe)", "universidade de sao paulo"))),
-  "Canadia Universities" = c(find_words(where = dat_temp$val, word = 
-c("university of new brunswick", "university of manitoba","acadia university", "carleton university", "concordia university  canada", "bangor university", "dalhousie university", "queens university  canada", "nova southeastern university" , "laval university", "mcgill university", "memorial university newfoundland" ,"vancouver island university", "university of toronto", "university of british columbia" , "universite de montreal", "university of quebec", "university of guelph", "universite du quebec a rimouski", "simon fraser university", "victoria university", "university toronto", "university of victoria", "queens university canada", "concordia university"))), 
+  "Canada Universities" = c(find_words(where = dat_temp$val, word = 
+                                         c("university of new brunswick", "university of manitoba","acadia university", "carleton university", "concordia university  canada", "bangor university", "dalhousie university", "queens university  canada", "nova southeastern university" , "laval university", "mcgill university", "memorial university newfoundland" ,"vancouver island university", "university of toronto", "university of british columbia" , "universite de montreal", "university of quebec", "university of guelph", "universite du quebec a rimouski", "simon fraser university", "victoria university", "university toronto", "university of victoria", "queens university canada", "concordia university"))), 
   "China Universities" = 
     c(find_words(where = dat_temp$val, word = 
                    c("university of science & technology", "ningbo university", "university of hong kong", "zhejiang ocean university", "tianjin university" , "shaanxi normal university", "shandong university", "shanghai ocean university", "northwest university xi'an", "ocean university of china", "university of chinese academy of sciences", "guangxi university", "guiyang university","nanjing university of information science & technology", "nanning normal university", "chinese university of hong kong", "east china normal university", "dalian ocean university", "hong kong baptist university", "guangdong ocean university", "jimei university"  ))), 
@@ -909,7 +920,7 @@ c("university of new brunswick", "university of manitoba","acadia university", "
   "Peru Universities" = c(find_words(where = dat_temp$val, word = c("universidad nacional federico villarreal"))), 
   "Poland Universities" = c(find_words(where = dat_temp$val, word = c("wroclaw university"))),
   "Portugal Universities" = c(find_words(where = dat_temp$val, word = 
-c("universidade dos acores", "universidade de coimbra", "universidade do porto", "universidade de aveiro", "university of tras os montes & alto douro", "universidade do algarve", "universidade de lisboa" ))), 
+                                           c("universidade dos acores", "universidade de coimbra", "universidade do porto", "universidade de aveiro", "university of tras os montes & alto douro", "universidade do algarve", "universidade de lisboa" ))), 
   "Philippines Universities" = c(find_words(where = dat_temp$val, word = c("silliman university"))),
   
   "Senegal Universities" = c(find_words(where = dat_temp$val, word = c("university cheikh anta diop dakar", "universite gaston berger"))), 
@@ -947,9 +958,7 @@ c("universidade dos acores", "universidade de coimbra", "universidade do porto",
   
   # United States -------------
   "NOAA" = c(find_words(where = dat_temp$val, word = c("National Oceanic and Atmospheric Administration", "NOAA", "(noaa)"))), 
-  "US Government" = c(find_words(where = dat_temp$val, word = c("US Government", "us ", "U.S.", "usa", "united states ", 
-                                                                "Tennessee Valley Authority", "pacific northwest national laboratory", 
-                                                                "nasa", "oak ridge national laboratory"))),   
+  "US Government" = c(find_words(where = dat_temp$val, word = c("US Government", "us ", "U.S.", "usa", "united states ", "Tennessee Valley Authority", "pacific northwest national laboratory", "nasa", "oak ridge national laboratory"))),   
   "US Universities" = 
     c(find_words(where = dat_temp$val, word = 
                    c(#"Universi", "College", 
@@ -1003,11 +1012,11 @@ c("universidade dos acores", "universidade de coimbra", "universidade do porto",
   "France Research Societies and Institutes" = 
     c(find_words(where = dat_temp$val, word = 
                    c("cnrs", "cirad", "institut universitaire europeen de la mer", "institut agro", "institut de recherche pour le developpement", "ifremer", "national institute for earth sciences & astronomy", "inria",  "inrae", "institut national des sciences et technologies de la mer"))), 
-
+  
   "France Government" = c(find_words(where = dat_temp$val, word = c("office francais de la biodiversite", "ofb"))),
   "Finland Government" = c(find_words(where = dat_temp$val, word = c("geological survey of finland"))),
   "Finland Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("natural resources institute finland", "finnish environment institute"))),
-
+  
   "Germany Research Societies and Institutes" = 
     c(find_words(where = dat_temp$val, word = 
                    c("senckenberg gesellschaft fur naturforschung", "leibniz zentrum fur marine tropenforschung", "leibniz institut", "johann heinrich von thunen institute", "helmholtz zentrum hereon", "helmholtz association"))),
@@ -1034,7 +1043,7 @@ c("universidade dos acores", "universidade de coimbra", "universidade do porto",
   # "Lithuania Government" = c(find_words(where = dat_temp$val, word = c("lithuania"))),
   "Mexico Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("centro de investigaciones biologicas del noroeste", "cibnor", "centro de investigacion en alimentacion y desarrollo", "instituto politecnico nacional mexico", "cicese centro de investigacion cientifica y de educacion superior de ensenada"))),
   "Mongolia Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("mongolian academy of sciences"))), 
-
+  
   "New Zealand Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("national institute of water & atmospheric research", "niwa"))),
   "Netherlands Research Societies and Institutes" = c(find_words(where = dat_temp$val, word = c("royal netherlands institute for sea research", "nioz", "royal netherlands academy of arts & sciences", "netherlands institute of ecology", "nioo knaw"))), 
   "Netherlands Government" = c(find_words(where = dat_temp$val, word = c("naturalis biodiversity center"))),  
@@ -1083,7 +1092,7 @@ c("universidade dos acores", "universidade de coimbra", "universidade do porto",
   "Private Research and Consulting" = 
     c(find_words(where = dat_temp$val, 
                  word = c("industrial economics, incorporated", "ic independent consulting", "earth resources technology inc", "fishwell consulting"))),
-
+  
   "International governance" = 
     c(find_words(where = dat_temp$val, word = 
                    c("The World Bank", "european commission joint research centre", "azti", "food & agriculture organization of the united nations", "fao"))))
@@ -1091,8 +1100,9 @@ c("universidade dos acores", "universidade de coimbra", "universidade do porto",
 aaa <- data_condense(dat_descr, variable = "affiliations", list0, list_as_is = TRUE, append = "_cond1")
 
 dat_descr <- aaa$dat_descr
+aaa$groups
 
-# Create condensed affiliation categories (part 2) -------------------------------------
+# Create condensed affiliation categories by institution type ------------------
 
 list0 <- list(
   "Medical" = "Medical", 
@@ -1106,11 +1116,12 @@ list0 <- list(
   "International governance" = "International governance"
 )
 
-aaa <- data_condense(dat_descr, variable = "affiliations_cond1", list0, list_as_is = TRUE, append = "_cond2")
+aaa <- data_condense(dat_descr, variable = "affiliations_cond1", list0, list_as_is = TRUE, append = "_by_institution_type")
 
 dat_descr <- aaa$dat_descr
+aaa$groups
 
-# Create condensed affiliation categories (part 3) -------------------------------------
+# Create condensed affiliation categories by country -------------------------------------
 
 a <- names(list00)
 a <- gsub(x = a, replacement = "", ignore.case = TRUE, pattern = "Universities")
@@ -1120,6 +1131,7 @@ a <- gsub(x = a, replacement = "", ignore.case = TRUE, pattern = "Government")
 a <- gsub(x = a, replacement = "", ignore.case = TRUE, pattern = "Research Societies and Institutes")
 a <- gsub(x = a, replacement = "", ignore.case = TRUE, pattern = "Museums and Education")
 a <- gsub(x = a, replacement = "", ignore.case = TRUE, pattern = "governance")
+a <- gsub(x = a, replacement = "United States", pattern = "US")
 a[grepl(pattern = "Private", x = a, ignore.case = TRUE)] <- "Private"
 a <- sort(unique(trimws(a)))
 
@@ -1129,10 +1141,10 @@ for (i in 1:length(a)) {
   names(list0)[names(list0) == "temp"] <- a[i]
 }
 
-aaa <- data_condense(dat_descr, variable = "affiliations_cond1", list0, list_as_is = TRUE, append = "_cond3")
+aaa <- data_condense(dat_descr, variable = "affiliations_cond1", list0, list_as_is = TRUE, append = "_by_country")
 
 dat_descr <- aaa$dat_descr
-
+aaa$groups
 ```
 
 # Analaysis summary
@@ -1194,7 +1206,6 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
   title0 <- paste0("Frequency and year, by ", gsub(pattern = "_", replacement = " ", x = variable))
   title0_cum <- paste0("Cummulative frequency and year, by ", gsub(pattern = "_", replacement = " ", x = variable))
   
-  
   # make data wrangling easier -------------------------------------------------
   dat0 <- dat1  %>% 
     dplyr::filter(var == variable) %>% 
@@ -1202,17 +1213,30 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
     dplyr::filter(!is.na(val))
   
   # get totals for whole timeseries --------------------------------------------
+  
+  cutoff_cat <- dat0 %>% 
+    dplyr::left_join(
+      dat0 %>% 
+        dplyr::group_by(val) %>% 
+        dplyr::summarise(freq = n()) %>% 
+        dplyr::ungroup() %>%
+        dplyr::arrange(desc(freq)) ) %>% 
+    dplyr::mutate(val2 = ifelse(freq <= other_cutoff, "Other", val)) %>% 
+    dplyr::filter(val2 == "Other") %>% 
+    dplyr::select(val) %>% 
+    dplyr::distinct()
+  
   dat_total <- dat0 %>% 
     dplyr::left_join(
       dat0 %>% 
         dplyr::group_by(val) %>% 
         dplyr::summarise(freq = n()) %>% 
         dplyr::ungroup() %>%
-        dplyr::arrange(desc(freq)) %>%
-        dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) ) %>% 
+        dplyr::arrange(desc(freq)) ) %>% 
+    dplyr::mutate(val = ifelse(val %in% unlist(cutoff_cat), "Other", val)) %>%
     dplyr::group_by(val) %>% 
     dplyr::summarise(freq = n()) %>% 
-    dplyr::ungroup() %>%
+    dplyr::ungroup()  %>%
     dplyr::arrange(desc(freq)) %>% 
     dplyr::filter(!is.na(val)) %>% 
     dplyr::mutate(val1 = paste0(val, " (", freq, ")"))
@@ -1228,9 +1252,9 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
                        dplyr::group_by(val) %>%                   
                        dplyr::summarise(freq = n()) %>%
                        dplyr::ungroup() %>%
-                       dplyr::arrange(desc(freq)) %>%
-                       dplyr::mutate(val = ifelse(
-                         freq <= other_cutoff, "Other", val))) %>%
+                       dplyr::arrange(desc(freq)))   %>%
+    dplyr::mutate(val = ifelse(val %in% unlist(cutoff_cat), "Other", val)) %>%
+    # dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) %>%
     dplyr::group_by(publication_year, val) %>%
     dplyr::summarise(freq = n()) %>%
     dplyr::ungroup() %>%
@@ -1361,34 +1385,109 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
     ylab("Frequency") +
     ggtitle(title0_cum) 
   
-  ggsave(filename = here::here("docs/index_files/figure-html/", paste0(variable,"-cumarea.png")),
+  ggsave(filename = here::here("docs/index_files/figure-html/", 
+                               paste0(variable,"-cumarea.png")),
          plot = figure_cumarea, width = 6.5, height = 8)
   
-  # frequency table ------------------------------------------------------------
+  # frequency and trend table ------------------------------------------------------------
   
-  dat_total <- dat_total %>%
+  dat_print <- dat_total %>%
     dplyr::arrange(val) %>%
     dplyr::arrange(desc(freq)) %>% 
     dplyr::select(-val1) %>% 
     dplyr::rename("Category" = val, 
-                  "Frequency" = freq)
+                  "Frequency" = freq) %>% 
+    dplyr::mutate(r2 = NA, 
+                  p = NA, 
+                  slope = NA, 
+                  plot = NA) %>% 
+    dplyr::relocate(Category, Frequency, p, r2, plot)
   
-  dat_print <- dat_total %>% 
+  for (i in 1:nrow(dat_print)) {
+    temp <- dat_total_by_year %>%
+      dplyr::filter(!is.na(val)) %>%
+      dplyr::filter(val == dat_total$val[i]) %>% 
+      dplyr::filter(publication_year >= (max(publication_year)-19)) 
+    
+    if ((nrow(temp)>2) & (dat_print$Frequency[i] > 3)) {
+      temp1 <- summary(lm(formula = freq ~ publication_year, data = temp))
+      dat_print$r2[i] <- round(temp1$r.squared, digits = 3)
+      dat_print$p[i] <- round(temp1$coefficients[2,4], digits = 3)
+      dat_print$slope[i] <- temp1$coefficients[2,1]
+      
+      dat_print$plot[i] <- list(
+        temp %>% 
+          ggplot2::ggplot(mapping = aes(x = publication_year, y = freq, group = val)) +
+          ggplot2::geom_point(show.legend = FALSE) +
+          ggplot2::theme_void() +
+          ggplot2::geom_smooth(
+            method = "lm", 
+            formula = y ~ x, 
+            se = FALSE, 
+            color = dplyr::case_when(
+              (dat_print$slope[i] >= -1 & dat_print$slope[i] <= 1) ~ "blue", 
+              (abs(dat_print$slope[i]) == dat_print$slope[i]) ~ "green", 
+              (abs(dat_print$slope[i]) != dat_print$slope[i]) ~ "red") )
+        # ifelse((as.numeric(dat_print$p[i]) <= 0.01), "red", "pink")) 
+      )    
+    } else {
+      str0 <- paste0(temp$publication_year, collapse = ", ")
+      dat_print$r2[i] <- dat_print$p[i] <- "-"
+      dat_print$plot[i] <- list(ggplot2::ggplot()
+        # ggplot2::ggplot(mapping = aes(x = 1, y = 1)) +
+        #   ggplot2::geom_label(mapping = aes(label = str0) ) +
+        #   ggplot2::theme_void()
+      )
+    }
+    
+    if (is.nan(dat_print$r2[i])) {
+      dat_print$r2[i] <- "-"
+    }
+    
+    if (is.nan(dat_print$p[i])) {
+      dat_print$p[i] <- "-"
+    }
+  }
+  
+  dat_print <- dat_print %>% 
+    dplyr::select(-slope) %>%
     flextable::flextable() %>%
     flextable::theme_zebra() %>%
-    flextable::width(width = c(5, 1))
+    flextable::mk_par(
+      j = "plot",
+      value = flextable::as_paragraph(
+        gg_chunk(value = plot, width = 1, height = 1) ) )  %>% 
+    flextable::set_header_labels(
+      p = "p-value", r2 = "r^2", plot = "Trend") %>%
+    flextable::compose( 
+      j = c("plot"),
+      value = as_paragraph(
+        flextable::gg_chunk(value = ., height = .2, width = 1)),
+      use_dot = TRUE) %>% 
+    flextable::add_header_row(x =., 
+                              values = c("Category", "Frequency", "20-year Trend"), 
+                              colwidths = c(1,1,3),
+                              top = TRUE) %>% 
+    flextable::merge_v(part = "header") %>% 
+    flextable::align(part = "header", align = "center") %>% 
+    flextable::hline(part = "header", j = c(3:5), i = 1) %>% 
+    flextable::fit_to_width(max_width = 8)
   
-  return(list("line_plot" = figure_line, 
-              "bar_plot" = figure_bar,
-              "area_plot" = figure_area,
-              "cumline_plot" = figure_cumline,
-              "cumbar_plot" = figure_cumbar,
-              "cumarea_plot" = figure_cumarea,
-              "table_print" = dat_print, 
-              "table_raw" = dat_total))
+  dat_total <- dat_total %>% 
+      dplyr::rename(Frequency = freq, "Category" = val)
+  
+  return(list(
+    # "line_plot" = figure_line, 
+    #           "bar_plot" = figure_bar,
+    #           "area_plot" = figure_area,
+    #           "cumline_plot" = figure_cumline,
+    #           "cumbar_plot" = figure_cumbar,
+    #           "cumarea_plot" = figure_cumarea,
+    #           "wordcloud_plot" = figure_wordcloud, 
+    "table_print" = dat_print, 
+    "table_raw" = dat_total))
 }
 ```
-
 
 ```{r run-child, results = 'asis'}
 
@@ -1402,14 +1501,6 @@ for (var0 in temp){
 ```
 
 `r paste(knitr::knit(text = unlist(src)), collapse = '\n')`
-
-
-```{r}
-
-
-
-
-```
 
 # R Version Metadata
 
