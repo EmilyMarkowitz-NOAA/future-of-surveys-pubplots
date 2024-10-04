@@ -1434,9 +1434,9 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
       str0 <- paste0(temp$publication_year, collapse = ", ")
       dat_print$r2[i] <- dat_print$p[i] <- "-"
       dat_print$plot[i] <- list(ggplot2::ggplot()
-        # ggplot2::ggplot(mapping = aes(x = 1, y = 1)) +
-        #   ggplot2::geom_label(mapping = aes(label = str0) ) +
-        #   ggplot2::theme_void()
+                                # ggplot2::ggplot(mapping = aes(x = 1, y = 1)) +
+                                #   ggplot2::geom_label(mapping = aes(label = str0) ) +
+                                #   ggplot2::theme_void()
       )
     }
     
@@ -1474,7 +1474,7 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
     flextable::fit_to_width(max_width = 8)
   
   dat_total <- dat_total %>% 
-      dplyr::rename(Frequency = freq, "Category" = val)
+    dplyr::rename(Frequency = freq, "Category" = val)
   
   return(list(
     # "line_plot" = figure_line, 
@@ -1501,6 +1501,267 @@ for (var0 in temp){
 ```
 
 `r paste(knitr::knit(text = unlist(src)), collapse = '\n')`
+
+# Google scholar search
+
+```{r eval = FALSE}
+# https://jef.works/blog/2024/03/18/querying-google-scholar-with-rvest/
+library(rvest)
+
+yrs <- 1950:2024
+
+# searches <- data.frame("type" = "dummy", 
+#                        "search" = "%22as+of+my+last+knowledge+update%22+-%22ChatGPT%22")
+
+searches <- data.frame(type = "Bottom trawls", 
+                       search = '"bottom trawl" OR "beam trawl" OR "otter trawls"') 
+
+searches <- dplyr::bind_rows(searches, 
+                             data.frame(type = "Acoustic trawls", 
+                                        search = '"Mid water trawl" OR "Mid-water trawl" OR "Midwater trawl" OR "pelagic trawl" "OR "Acoustic/traw"'))
+
+searches <- dplyr::bind_rows(searches, 
+                             data.frame(type = "Dredge", 
+                                        search = '"dredge" OR "benthos'))
+
+searches <- dplyr::bind_rows(searches, 
+                             data.frame(type = "eDNA", 
+                                        search = '"edna" OR "e-dna"'))
+
+searches <- dplyr::bind_rows(searches, 
+                             data.frame(type = "Stationary gear", 
+                                        search = '"stationary gear" AND "pot" AND "trap" AND "HOOK AND LINE" AND "HOOK & LINE" OR "LONGLINE"'))
+
+searches <- dplyr::bind_rows(searches, 
+                             data.frame(type = "Visual methods", 
+                                        search = '"camera" OR "scuba" OR "video" OR "HABCAM"'))
+
+searches <- dplyr::bind_rows(searches, 
+                             data.frame(type = "Mark-recapture", 
+                                        search = '"mark-recapture" OR "mark recapture" OR "mark recovery" OR "ptag" or "foy tag"'))
+
+searches <- dplyr::bind_rows(searches, 
+                             data.frame(type = "Aerial surveys", 
+                                        search = '"drone" OR "drones" OR "lidar" OR "plane" or "aerial"'))
+
+searches$search <- paste0('"Fishery independent survey" OR "Fisheries independent survey" OR "Fishery-independent survey" OR "Fisheries-independent survey" OR "fish survey" OR "ecosystem survey" OR "Fishery independent data" AND ', searches$search)
+
+searches <- dplyr::bind_rows(searches, 
+                             data.frame(type = "All FIS", 
+                                        search = '"Fishery independent survey" OR "Fisheries independent survey" OR "Fishery-independent survey" OR "Fisheries-independent survey" OR "fish survey" OR "ecosystem survey" OR "Fishery independent data"'))
+
+searches$search <- gsub(pattern = '"', replacement = "%22", x = searches$search)
+searches$search <- gsub(pattern = ' OR ', replacement = "|", x = searches$search)
+# searches$search <- gsub(pattern = ' AND ', replacement = "+", x = searches$search)
+searches$search <- gsub(pattern = ' ', replacement = "+", x = searches$search)
+
+for (searches0 in 1:length(searches$search)){
+  numpubs <- c()
+  print(searches0)
+  for (yr in yrs) {
+    print(yr)
+    url <- paste0("https://scholar.google.com/scholar?q=",searches$search[searches0],"&as_ylo=",yr,"&as_yhi=", yr)
+    
+    page <- read_html(url) %>%
+      html_nodes(".gs_ab_mdw") %>%
+      html_text()
+    
+    numpubs <- dplyr::bind_rows(
+      numpubs, 
+      data.frame("type" = searches$type[searches0], 
+                 "search" = searches$search[searches0],
+                 "year" = yr, 
+                 "pubs" = as.numeric(gsub(",", "", stringr::str_extract(page[[2]], "\\d{1,3}(,\\d{3})*")))))
+    
+  }
+  write.csv(x = numpubs, file = here::here("data", paste0("numpubs_", searches0,".csv")))
+  
+}
+
+```
+
+
+```{r}
+options(scipen = 999)
+
+numpubs0 <- c()
+for (i in c(1:9)) {
+  numpubs0 <- dplyr::bind_rows(numpubs0, 
+                               read.csv(file = here::here("data", paste0("numpubs_",i,".csv"))) %>% 
+                                 dplyr::select(-search, -X))
+}
+
+if (FALSE) { # TEST
+  numpubs0 <- tidyr::crossing(searches, year = yrs) 
+  numpubs0$pubs[1] <- rnorm(mean = 100, sd = 10, n = 1)
+  for (i in 2:nrow(numpubs0)) {
+    numpubs0$pubs[i] <- numpubs0$pubs[i-1] + rnorm(n = 1, mean = 5, sd = 10)
+  }
+  numpubs0$pubs <- round(numpubs0$pubs, digits = 0)
+}
+
+# add year_bin
+
+year_bin <- c()
+for (i in unique(numpubs0$year)) {
+  year_bin <- c(year_bin, 
+                paste0( 
+                  ifelse(as.numeric(substr(x = i, start = 4, stop = 4)) >= 5,  
+                         as.numeric(paste0(substr(x = i, start = 1, stop = 3), 5)), #ifelse(i == 2024, 4, 5))), 
+                         as.numeric(paste0(substr(x = i, start = 1, stop = 3), 0)) ), 
+                  "-\n", 
+                  ifelse(as.numeric(substr(x = i, start = 4, stop = 4)) >= 5,  
+                         as.numeric(paste0(substr(x = i, start = 1, stop = 3), 9)), 
+                         as.numeric(paste0(substr(x = i, start = 1, stop = 3), 4)) )
+                ) )
+}
+
+numpubs0 <- numpubs0 %>% 
+  dplyr::left_join(data.frame(year = unique(numpubs0$year), 
+                              year_bin = year_bin))
+
+# Find first entry in table
+temp <- numpubs0 %>% 
+  tidyr::pivot_wider(names_from = "type", id_cols = "year", values_from = "pubs") 
+temp <- temp[order(temp$year),]
+temp$nas <- rowSums(is.na(temp[,-1]))
+min(temp$year[temp$nas != (ncol(temp)-2)])  
+
+numpubs0 <- numpubs0 %>% 
+  dplyr::filter(year >= min(temp$year[temp$nas != (ncol(temp)-2)]) )
+
+library(ggplot2)
+library(cowplot)
+
+
+plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FALSE) {
+
+pp1 <- ggplot2::ggplot(
+  data = numpubs0 %>% 
+    # dplyr::filter(year != 2024) %>%
+    dplyr::filter(type != "All FIS"), 
+  mapping = aes(x = year, y = pubs, color = type)) + 
+  ggplot2::geom_line(linewidth = 2, 
+                     show.legend = FALSE) + 
+  ggplot2::scale_color_viridis_d(option = "D") 
+
+if (allfis_a) {
+pp1 <- pp1 +
+  ggplot2::geom_point(
+    data = numpubs0 %>%
+      # dplyr::filter(year != 2024) %>%
+      dplyr::filter(type == "All FIS"),
+    mapping = aes(x = year, y = pubs, fill = type),
+    alpha = .5,
+    size = 2,
+    show.legend = TRUE) +
+  ggplot2::scale_fill_grey(name = "")
+} 
+
+if (log_a) {
+  pp1 <- pp1 + scale_y_continuous(trans='log2', name = "")
+} else {
+  pp1 <- pp1 +  ggplot2::ylab("")
+}
+
+pp1 <- pp1  +
+  ggplot2::guides(colour = FALSE) + 
+  ggplot2::ggtitle(paste0("A) Number of Publications", ifelse(log_a, " (Log2)", ""))) +
+  ggplot2::xlab("Years") +
+  ggplot2::theme_classic() + 
+  ggplot2::theme(legend.box.margin = margin(0, 0, 0, 0)) 
+
+if (yr5bin_b) {
+pp2 <- ggplot2::ggplot(
+  data = numpubs0 %>% 
+    dplyr::filter(type != "All FIS") %>%
+    dplyr::group_by(type, year_bin) %>%
+    dplyr::reframe(pubs = sum(pubs, na.rm = TRUE)) %>%
+    dplyr::ungroup(),
+  # dplyr::select(-year_bin) %>%
+  # dplyr::rename(year_bin = year),
+  mapping = aes(x = year_bin, y = pubs, fill = type)) 
+} else {
+pp2 <- ggplot2::ggplot(
+  data = numpubs0 %>% 
+    dplyr::filter(type != "All FIS") %>%
+    dplyr::select(-year_bin) %>%
+    dplyr::rename(year_bin = year),
+  mapping = aes(x = year_bin, y = pubs, fill = type))   
+}
+
+pp2 <- pp2 +  
+  ggplot2::geom_bar(#position = "fill", 
+    position = position_fill(reverse = TRUE), 
+    stat="identity") + 
+  ggplot2::scale_fill_viridis_d(option = "D") + 
+  ggplot2::ylab("") + 
+  ggplot2::ggtitle("B) Percent of Publications (%)") +
+  ggplot2::xlab("5-Year Bins") +
+  ggplot2::theme_classic() + 
+  ggplot2::scale_y_continuous(labels = function(x) paste0(x*100, "%")) + # Multiply by 100 & add %  
+  ggplot2::guides(fill = guide_legend(
+    title = "", 
+    position = "bottom", 
+    reverse = TRUE,
+    nrow = 1)) +  
+  ggplot2::theme(legend.box.margin = margin(0, 0, 0, 0)) 
+
+# pp_legend <- cowplot::get_legend(pp2 + 
+#   ggplot2::guides(fill=guide_legend(position = "bottom")) )
+
+if (allfis_a) {
+pp1_legend <- get_plot_component(
+  plot = pp1, 
+  "guide-box", 
+  return_all = TRUE)[[1]]
+}
+
+pp2_legend <- get_plot_component(
+  plot = pp2, 
+  "guide-box", 
+  return_all = TRUE)[[3]]
+
+pp <- cowplot::plot_grid(
+  pp1 + ggplot2::theme(legend.position = "none"), 
+  pp2 + ggplot2::theme(legend.position = "none"), 
+  # rel_heights = c(.9, 1), 
+  # labels = c('A', 'B'), 
+  label_size = 12)
+
+if (allfis_a) {
+  pp_legend <- cowplot::plot_grid("", pp1_legend, pp2_legend, "", nrow = 1, rel_widths = c(.3, .3, 1, .3))
+} else {
+  pp_legend <- pp2_legend
+}
+
+pp <- cowplot::plot_grid(pp, pp_legend, ncol = 1, rel_heights = c(1, .1))
+
+return(pp)
+}
+
+p1 <- plot_figure(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FALSE) 
+p2 <- plot_figure(numpubs0 %>% 
+  dplyr::filter(year >= 1960), 
+  log_a = FALSE, allfis_a = FALSE, yr5bin_b = FALSE) 
+p3 <- plot_figure(numpubs0 %>% 
+  dplyr::filter(year >= 1960), 
+  log_a = TRUE, allfis_a = TRUE, yr5bin_b = TRUE) 
+p4 <- plot_figure(numpubs0 %>% 
+  dplyr::filter(year >= 1960), 
+  log_a = TRUE, allfis_a = FALSE, yr5bin_b = TRUE) 
+
+```
+
+```{r}
+
+library("wosr")
+library("bibliometrix")
+
+wosr::query_wos()
+
+```
+
 
 # R Version Metadata
 
