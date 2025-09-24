@@ -97,19 +97,19 @@ wordcloud::wordcloud(
 
 dat_total <- aaa$table_raw
 
-dat2 <- classifiers %>% 
-  dplyr::filter(var == var000) %>% 
-  dplyr::filter(!is.na(val_lat)) %>% 
+dat2 <- classifiers |> 
+  dplyr::filter(var == var000) |> 
+  dplyr::filter(!is.na(val_lat)) |> 
   dplyr::select(val, 
                 lat = val_lat, 
-                lon = val_lon) %>% 
-  dplyr::right_join(dat_total %>% 
-                     dplyr::rename(val = Category)) %>% 
-  dplyr::arrange(desc(Frequency)) %>% 
+                lon = val_lon) |> 
+  dplyr::right_join(dat_total |> 
+                     dplyr::rename(val = Category)) |> 
+  dplyr::arrange(desc(Frequency)) |> 
   dplyr::mutate(val_label = paste0(val, " (", Frequency, ")"), 
                 val_label = factor(x = val_label, levels = val_label, labels = val_label, ordered = TRUE), 
                 lon = ifelse(is.na(lon), 0, lon), 
-                lat = ifelse(is.na(lat), 0, lat)) %>%
+                lat = ifelse(is.na(lat), 0, lat)) |>
   sf::st_as_sf(coords = c("lon", "lat"),
                crs = "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0") 
 

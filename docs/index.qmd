@@ -71,8 +71,8 @@ data_condense <- function(dat_descr, variable, list0, list_as_is = FALSE, append
   }
   
   eval(parse(text=
-               paste0('dat_temp <- dat_descr %>%
-    dplyr::filter(var == "',variable,'" & !is.na(val)) %>%
+               paste0('dat_temp <- dat_descr |>
+    dplyr::filter(var == "',variable,'" & !is.na(val)) |>
     dplyr::mutate(
       val0 = val,
       var = paste0("',variable, append,'"),
@@ -134,31 +134,31 @@ if (FALSE) {
 # Clean classifiers ------------------------------------------------------------
 classifiers <- readxl::read_xlsx(path = here::here("data/data.xlsx"), 
                                  sheet = "Classifiers", 
-                                 skip = 1) %>% 
+                                 skip = 1) |> 
   janitor::clean_names() 
 
-classifiers <- classifiers %>% 
+classifiers <- classifiers |> 
   dplyr::select("gear_type", # "gear_type_condensed", 
                 "research_field", # "research_field_condensed", 
                 "location", #"location_lat", "location_lon", 
                 "organism", # "organism_condensed", 
-                "survey") %>%
+                "survey") |>
   tidyr::pivot_longer(cols = c("gear_type", # "gear_type_condensed", 
                                "research_field", # "research_field_condensed", 
                                "location", #"location_lat", "location_lon", 
                                "organism", # "organism_condensed", 
                                "survey"), 
-                      names_to = "var", values_to = "val") %>% 
-  dplyr::left_join(classifiers %>% 
-                     dplyr::filter(!is.na(location)) %>% 
+                      names_to = "var", values_to = "val") |> 
+  dplyr::left_join(classifiers |> 
+                     dplyr::filter(!is.na(location)) |> 
                      dplyr::select(val = location, 
                                    val_lat = location_lat, 
-                                   val_lon = location_lon) %>% 
+                                   val_lon = location_lon) |> 
                      dplyr::mutate(var = "location"))
 
 dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"), 
                          sheet = "Papers", 
-                         skip = 1) #%>% 
+                         skip = 1) #|> 
   # dplyr::filter(Survey1 %in% c("AFSC BTS - eastern Bering Sea", "AFSC BTS - northern Bering Sea", "AFSC BTS - Gulf of Alaska", "AFSC BTS - Aleutian Islands", "AFSC BTS - Bering Sea Slope", "NEFSC BTS") |
   #                 Survey2 %in% c("AFSC BTS - eastern Bering Sea", "AFSC BTS - northern Bering Sea", "AFSC BTS - Gulf of Alaska", "AFSC BTS - Aleutian Islands", "AFSC BTS - Bering Sea Slope", "NEFSC BTS") |
   #                 Survey3 %in% c("AFSC BTS - eastern Bering Sea", "AFSC BTS - northern Bering Sea", "AFSC BTS - Gulf of Alaska", "AFSC BTS - Aleutian Islands", "AFSC BTS - Bering Sea Slope", "NEFSC BTS") |
@@ -171,8 +171,8 @@ dat <- readxl::read_xlsx(path = here::here("data/data.xlsx"),
 ```{r data-wrangle-data}
 # Clean data -------------------------------------------------------------------
 
-dat <- dat %>% 
-  janitor::clean_names() %>% 
+dat <- dat |> 
+  janitor::clean_names() |> 
   dplyr::select(
     orig_order, 
     authors, 
@@ -194,116 +194,116 @@ dat <- dat %>%
     organism_condensed,
     organism,
     include
-  ) %>% 
+  ) |> 
   dplyr::select(-dplyr::ends_with("_condensed"))
 
 # Pivot data from categories ---------------------------------------------------
 
 dat_descr <- dplyr::bind_rows(
   
-  dat %>%
-    dplyr::filter(include == "YES") %>% 
+  dat |>
+    dplyr::filter(include == "YES") |> 
     dplyr::select(orig_order, 
                   publication_year, 
-                  dplyr::starts_with("gear_type")) %>% 
+                  dplyr::starts_with("gear_type")) |> 
     tidyr::pivot_longer(cols = dplyr::starts_with("gear_type"), 
                         names_pattern = "gear_type(.*)", 
                         names_to = "col",
-                        values_to = "val") %>% 
+                        values_to = "val") |> 
     dplyr::mutate(var ="gear_type"), 
   
-  # dat %>%
-  #   dplyr::filter(include == "YES") %>% 
+  # dat |>
+  #   dplyr::filter(include == "YES") |> 
   #   dplyr::select(orig_order, 
   #                 publication_year, 
-  #                 gear_type_condensed) %>% 
+  #                 gear_type_condensed) |> 
   #   tidyr::pivot_longer(cols = gear_type_condensed, 
   #                       names_to = "col",
-  #                       values_to = "val") %>% 
+  #                       values_to = "val") |> 
   #   dplyr::mutate(var ="gear_type_condensed"), 
   
-  dat %>%
-    dplyr::filter(include == "YES") %>% 
+  dat |>
+    dplyr::filter(include == "YES") |> 
     dplyr::select(orig_order, 
                   publication_year, 
-                  dplyr::starts_with("research_field")) %>% 
+                  dplyr::starts_with("research_field")) |> 
     tidyr::pivot_longer(cols = dplyr::starts_with("research_field"), 
                         names_pattern = "research_field(.*)", 
                         names_to = "col",
-                        values_to = "val") %>% 
+                        values_to = "val") |> 
     dplyr::mutate(var ="research_field"), 
   
-  # dat %>%
-  #   dplyr::filter(include == "YES") %>% 
+  # dat |>
+  #   dplyr::filter(include == "YES") |> 
   #   dplyr::select(orig_order, 
   #                 publication_year, 
-  #                 research_field_condensed) %>% 
+  #                 research_field_condensed) |> 
   #   tidyr::pivot_longer(cols = research_field_condensed, 
   #                       names_to = "col",
-  #                       values_to = "val") %>% 
+  #                       values_to = "val") |> 
   #   dplyr::mutate(var ="research_field_condensed"), 
   
-  dat %>%
-    dplyr::filter(include == "YES") %>% 
+  dat |>
+    dplyr::filter(include == "YES") |> 
     dplyr::select(orig_order, 
                   publication_year, 
-                  dplyr::starts_with("location")) %>% 
+                  dplyr::starts_with("location")) |> 
     tidyr::pivot_longer(cols = dplyr::starts_with("location"), 
                         names_pattern = "location(.*)", 
                         names_to = "col",
-                        values_to = "val") %>% 
+                        values_to = "val") |> 
     dplyr::mutate(var ="location"), 
   
-  # dat %>%
-  # dplyr::filter(include == "YES") %>% 
+  # dat |>
+  # dplyr::filter(include == "YES") |> 
   # dplyr::select(orig_order, 
   #               publication_year, 
-  #               location_condensed) %>% 
+  #               location_condensed) |> 
   # tidyr::pivot_longer(cols = location_condensed, 
   #                     names_to = "col",
-  #                     values_to = "val") %>% 
+  #                     values_to = "val") |> 
   # dplyr::mutate(var ="location_condensed"), 
   
-  dat %>%
-    dplyr::filter(include == "YES") %>% 
+  dat |>
+    dplyr::filter(include == "YES") |> 
     dplyr::select(orig_order, 
                   publication_year, 
-                  dplyr::starts_with("survey")) %>% 
+                  dplyr::starts_with("survey")) |> 
     tidyr::pivot_longer(cols = dplyr::starts_with("survey"), 
                         names_pattern = "survey(.*)", 
                         names_to = "col",
-                        values_to = "val") %>% 
+                        values_to = "val") |> 
     dplyr::mutate(var ="survey"),  
   
-  dat %>%
-    dplyr::filter(include == "YES") %>% 
+  dat |>
+    dplyr::filter(include == "YES") |> 
     dplyr::select(orig_order, 
                   publication_year, 
-                  val = organism) %>% 
+                  val = organism) |> 
     dplyr::mutate(var ="organism")#,
   
-  # dat %>%
-  #   dplyr::filter(include == "YES") %>% 
+  # dat |>
+  #   dplyr::filter(include == "YES") |> 
   #   dplyr::select(orig_order, 
   #                 publication_year, 
-  #                 organism_condensed) %>% 
+  #                 organism_condensed) |> 
   #   tidyr::pivot_longer(cols = organism_condensed, 
   #                       names_to = "col",
-  #                       values_to = "val") %>% 
+  #                       values_to = "val") |> 
   #   dplyr::mutate(var ="organism_condensed")
-) %>% 
+) |> 
   
-  dplyr::select(-dplyr::ends_with("col")) %>% 
+  dplyr::select(-dplyr::ends_with("col")) |> 
   
   # # add in columns from orig column
-  # dplyr::bind_rows(dat %>%
-  #                    dplyr::filter(include == "YES") %>% 
-  #                    dplyr::select(orig_order, publication_year, val = document_type) %>% 
-  #                    dplyr::mutate(var = "document_type")) %>% 
-  dplyr::bind_rows(dat %>%
-                     dplyr::filter(include == "YES") %>% 
-                     dplyr::select(orig_order, publication_year, val = source_title) %>% 
-                     dplyr::mutate(var = "source_title")) %>% 
+  # dplyr::bind_rows(dat |>
+  #                    dplyr::filter(include == "YES") |> 
+  #                    dplyr::select(orig_order, publication_year, val = document_type) |> 
+  #                    dplyr::mutate(var = "document_type")) |> 
+  dplyr::bind_rows(dat |>
+                     dplyr::filter(include == "YES") |> 
+                     dplyr::select(orig_order, publication_year, val = source_title) |> 
+                     dplyr::mutate(var = "source_title")) |> 
   dplyr::mutate(
     val = trimws(val), 
     val = gsub(pattern = "  ", x = val, replacement = " ", fixed = TRUE), 
@@ -411,7 +411,7 @@ classifiers_temp <-
                 -4.220581, -35.070190, 78.420416,
                 -149.731341, -147.797747, 98.435668) ) 
 
-classifiers <- classifiers_temp %>% 
+classifiers <- classifiers_temp |> 
   dplyr::bind_rows(classifiers)
 
 print(paste0("In classifiers, not in category: ", paste0(setdiff(classifiers_temp$val, names(list0)), collapse = ", ")))
@@ -421,14 +421,14 @@ print(paste0("In category, not in : classifiers", paste0(setdiff(names(list0), c
 
 ### Create key word column -----------------------------------------------------
 
-dat_temp <- dat %>%
-  dplyr::filter(is.na(include) | include %in% c("YES", "MAYBE")) %>%
-  dplyr::select(author_keywords, publication_year, orig_order) %>%
-  tidyr::separate(col = "author_keywords", sep = "; ", remove = FALSE, into = paste0("key_", 1:10)) %>% 
-  dplyr::select(-author_keywords) %>%
-  tidyr::pivot_longer(cols = paste0("key_", 1:10), names_to = "key_var", values_to = "val") %>%
-  dplyr::select(-key_var) %>% 
-  dplyr::filter(!is.na(val)) %>% 
+dat_temp <- dat |>
+  dplyr::filter(is.na(include) | include %in% c("YES", "MAYBE")) |>
+  dplyr::select(author_keywords, publication_year, orig_order) |>
+  tidyr::separate(col = "author_keywords", sep = "; ", remove = FALSE, into = paste0("key_", 1:10)) |> 
+  dplyr::select(-author_keywords) |>
+  tidyr::pivot_longer(cols = paste0("key_", 1:10), names_to = "key_var", values_to = "val") |>
+  dplyr::select(-key_var) |> 
+  dplyr::filter(!is.na(val)) |> 
   dplyr::mutate(
     var = "keywords", 
     val = gsub(x = val, pattern = "-", replacement = " "), 
@@ -832,14 +832,14 @@ aaa$groups
 
 # Create affiliation categories ------------------------------------------------
 
-dat_temp <- dat %>%
-  dplyr::filter(is.na(include) | include %in% c("YES", "MAYBE")) %>%
-  dplyr::select(affiliations, publication_year, orig_order) %>%
-  tidyr::separate(col = "affiliations", sep = "; ", remove = FALSE, into = paste0("aff_", 1:10)) %>% 
-  dplyr::select(-affiliations) %>%
-  tidyr::pivot_longer(cols = paste0("aff_", 1:10), names_to = "aff_var", values_to = "val") %>%
-  dplyr::select(-aff_var) %>% 
-  dplyr::filter(!is.na(val)) %>% 
+dat_temp <- dat |>
+  dplyr::filter(is.na(include) | include %in% c("YES", "MAYBE")) |>
+  dplyr::select(affiliations, publication_year, orig_order) |>
+  tidyr::separate(col = "affiliations", sep = "; ", remove = FALSE, into = paste0("aff_", 1:10)) |> 
+  dplyr::select(-affiliations) |>
+  tidyr::pivot_longer(cols = paste0("aff_", 1:10), names_to = "aff_var", values_to = "val") |>
+  dplyr::select(-aff_var) |> 
+  dplyr::filter(!is.na(val)) |> 
   dplyr::mutate(
     var = "affiliations", 
     val = gsub(x = val, pattern = "-", replacement = " "), 
@@ -1203,7 +1203,7 @@ figure_base <- ggplot2::ggplot()  +
     legend.key.spacing = unit(0.0010, 'cm'),
     legend.box.background = element_blank())
 
-world_coordinates <- maps::map("world", plot = FALSE, fill = TRUE) %>%
+world_coordinates <- maps::map("world", plot = FALSE, fill = TRUE) |>
   sf::st_as_sf() 
 ```
 
@@ -1214,38 +1214,38 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
   title0_cum <- paste0("Cummulative frequency and year, by ", gsub(pattern = "_", replacement = " ", x = variable))
   
   # make data wrangling easier -------------------------------------------------
-  dat0 <- dat1  %>% 
-    dplyr::filter(var == variable) %>% 
-    dplyr::select(publication_year, val, var) %>% 
+  dat0 <- dat1  |> 
+    dplyr::filter(var == variable) |> 
+    dplyr::select(publication_year, val, var) |> 
     dplyr::filter(!is.na(val))
   
   # get totals for whole timeseries --------------------------------------------
   
-  cutoff_cat <- dat0 %>% 
+  cutoff_cat <- dat0 |> 
     dplyr::left_join(
-      dat0 %>% 
-        dplyr::group_by(val) %>% 
-        dplyr::summarise(freq = n()) %>% 
-        dplyr::ungroup() %>%
-        dplyr::arrange(desc(freq)) ) %>% 
-    dplyr::mutate(val2 = ifelse(freq <= other_cutoff, "Other", val)) %>% 
-    dplyr::filter(val2 == "Other") %>% 
-    dplyr::select(val) %>% 
+      dat0 |> 
+        dplyr::group_by(val) |> 
+        dplyr::summarise(freq = n()) |> 
+        dplyr::ungroup() |>
+        dplyr::arrange(desc(freq)) ) |> 
+    dplyr::mutate(val2 = ifelse(freq <= other_cutoff, "Other", val)) |> 
+    dplyr::filter(val2 == "Other") |> 
+    dplyr::select(val) |> 
     dplyr::distinct()
   
-  dat_total <- dat0 %>% 
+  dat_total <- dat0 |> 
     dplyr::left_join(
-      dat0 %>% 
-        dplyr::group_by(val) %>% 
-        dplyr::summarise(freq = n()) %>% 
-        dplyr::ungroup() %>%
-        dplyr::arrange(desc(freq)) ) %>% 
-    dplyr::mutate(val = ifelse(val %in% unlist(cutoff_cat), "Other", val)) %>%
-    dplyr::group_by(val) %>% 
-    dplyr::summarise(freq = n()) %>% 
-    dplyr::ungroup()  %>%
-    dplyr::arrange(desc(freq)) %>% 
-    dplyr::filter(!is.na(val)) %>% 
+      dat0 |> 
+        dplyr::group_by(val) |> 
+        dplyr::summarise(freq = n()) |> 
+        dplyr::ungroup() |>
+        dplyr::arrange(desc(freq)) ) |> 
+    dplyr::mutate(val = ifelse(val %in% unlist(cutoff_cat), "Other", val)) |>
+    dplyr::group_by(val) |> 
+    dplyr::summarise(freq = n()) |> 
+    dplyr::ungroup()  |>
+    dplyr::arrange(desc(freq)) |> 
+    dplyr::filter(!is.na(val)) |> 
     dplyr::mutate(val1 = paste0(val, " (", freq, ")"))
   
   dat_total$val1 <- factor(x = dat_total$val1,
@@ -1254,24 +1254,24 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
                            ordered = TRUE)
   
   # prepare frequency data for each year ---------------------------------------
-  dat_total_by_year <- dat0 %>%
-    dplyr::left_join(dat0 %>% # freq data for whole time series in paren
-                       dplyr::group_by(val) %>%                   
-                       dplyr::summarise(freq = n()) %>%
-                       dplyr::ungroup() %>%
-                       dplyr::arrange(desc(freq)))   %>%
-    dplyr::mutate(val = ifelse(val %in% unlist(cutoff_cat), "Other", val)) %>%
-    # dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) %>%
-    dplyr::group_by(publication_year, val) %>%
-    dplyr::summarise(freq = n()) %>%
-    dplyr::ungroup() %>%
-    dplyr::arrange(desc(freq))  %>%
-    dplyr::filter(!is.na(val)) %>%
-    dplyr::left_join(dat_total %>%
-                       dplyr::select(-freq)) %>% 
-    dplyr::arrange(publication_year) %>% 
-    dplyr::group_by(val) %>%
-    dplyr::mutate(cum_freq = cumsum(freq)) %>%
+  dat_total_by_year <- dat0 |>
+    dplyr::left_join(dat0 |> # freq data for whole time series in paren
+                       dplyr::group_by(val) |>                   
+                       dplyr::summarise(freq = n()) |>
+                       dplyr::ungroup() |>
+                       dplyr::arrange(desc(freq)))   |>
+    dplyr::mutate(val = ifelse(val %in% unlist(cutoff_cat), "Other", val)) |>
+    # dplyr::mutate(val = ifelse(freq <= other_cutoff, "Other", val)) |>
+    dplyr::group_by(publication_year, val) |>
+    dplyr::summarise(freq = n()) |>
+    dplyr::ungroup() |>
+    dplyr::arrange(desc(freq))  |>
+    dplyr::filter(!is.na(val)) |>
+    dplyr::left_join(dat_total |>
+                       dplyr::select(-freq)) |> 
+    dplyr::arrange(publication_year) |> 
+    dplyr::group_by(val) |>
+    dplyr::mutate(cum_freq = cumsum(freq)) |>
     dplyr::ungroup() 
   
   # line plot ------------------------------------------------------------------
@@ -1398,22 +1398,22 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
   
   # frequency and trend table ------------------------------------------------------------
   
-  dat_print <- dat_total %>%
-    dplyr::arrange(val) %>%
-    dplyr::arrange(desc(freq)) %>% 
-    dplyr::select(-val1) %>% 
+  dat_print <- dat_total |>
+    dplyr::arrange(val) |>
+    dplyr::arrange(desc(freq)) |> 
+    dplyr::select(-val1) |> 
     dplyr::rename("Category" = val, 
-                  "Frequency" = freq) %>% 
+                  "Frequency" = freq) |> 
     dplyr::mutate(r2 = NA, 
                   p = NA, 
                   slope = NA, 
-                  plot = NA) %>% 
+                  plot = NA) |> 
     dplyr::relocate(Category, Frequency, p, r2, plot)
   
   for (i in 1:nrow(dat_print)) {
-    temp <- dat_total_by_year %>%
-      dplyr::filter(!is.na(val)) %>%
-      dplyr::filter(val == dat_total$val[i]) %>% 
+    temp <- dat_total_by_year |>
+      dplyr::filter(!is.na(val)) |>
+      dplyr::filter(val == dat_total$val[i]) |> 
       dplyr::filter(publication_year >= (max(publication_year)-19)) 
     
     if ((nrow(temp)>2) & (dat_print$Frequency[i] > 3)) {
@@ -1423,7 +1423,7 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
       dat_print$slope[i] <- temp1$coefficients[2,1]
       
       dat_print$plot[i] <- list(
-        temp %>% 
+        temp |> 
           ggplot2::ggplot(mapping = aes(x = publication_year, y = freq, group = val)) +
           ggplot2::geom_point(show.legend = FALSE) +
           ggplot2::theme_void() +
@@ -1456,31 +1456,31 @@ auto_plot <- function(dat1, variable, other_cutoff = 0) {
     }
   }
   
-  dat_print <- dat_print %>% 
-    dplyr::select(-slope) %>%
-    flextable::flextable() %>%
-    flextable::theme_zebra() %>%
+  dat_print <- dat_print |> 
+    dplyr::select(-slope) |>
+    flextable::flextable() |>
+    flextable::theme_zebra() |>
     flextable::mk_par(
       j = "plot",
       value = flextable::as_paragraph(
-        gg_chunk(value = plot, width = 1, height = 1) ) )  %>% 
+        gg_chunk(value = plot, width = 1, height = 1) ) )  |> 
     flextable::set_header_labels(
-      p = "p-value", r2 = "r^2", plot = "Trend") %>%
+      p = "p-value", r2 = "r^2", plot = "Trend") |>
     flextable::compose( 
       j = c("plot"),
       value = as_paragraph(
         flextable::gg_chunk(value = ., height = .2, width = 1)),
-      use_dot = TRUE) %>% 
+      use_dot = TRUE) |> 
     flextable::add_header_row(x =., 
                               values = c("Category", "Frequency", "20-year Trend"), 
                               colwidths = c(1,1,3),
-                              top = TRUE) %>% 
-    flextable::merge_v(part = "header") %>% 
-    flextable::align(part = "header", align = "center") %>% 
-    flextable::hline(part = "header", j = c(3:5), i = 1) %>% 
+                              top = TRUE) |> 
+    flextable::merge_v(part = "header") |> 
+    flextable::align(part = "header", align = "center") |> 
+    flextable::hline(part = "header", j = c(3:5), i = 1) |> 
     flextable::fit_to_width(max_width = 8)
   
-  dat_total <- dat_total %>% 
+  dat_total <- dat_total |> 
     dplyr::rename(Frequency = freq, "Category" = val)
   
   return(list(
@@ -1615,8 +1615,8 @@ for (searches0 in c(1:length(searches$search))) {
     print(yr)
     url <- paste0("https://scholar.google.com/scholar?q=",searches$search[searches0],"&as_ylo=",yr,"&as_yhi=", yr)
     
-    page <- read_html(url) %>%
-      html_nodes(".gs_ab_mdw") %>%
+    page <- read_html(url) |>
+      html_nodes(".gs_ab_mdw") |>
       html_text()
     
     numpubs <- dplyr::bind_rows(
@@ -1646,7 +1646,7 @@ library(scales)
 numpubs0 <- c()
 for (i in c(1:10)) {
   numpubs0 <- dplyr::bind_rows(numpubs0, 
-                               read.csv(file = here::here("data", paste0("numpubs_",i,".csv"))) %>% 
+                               read.csv(file = here::here("data", paste0("numpubs_",i,".csv"))) |> 
                                dplyr::select(type, year, pubs))
 }
 
@@ -1675,39 +1675,105 @@ for (i in unique(numpubs0$year)) {
                 ) )
 }
 
-numpubs0 <- numpubs0 %>% 
+# numpubs0 <- numpubs0 |> 
+#   dplyr::left_join(data.frame(year = unique(numpubs0$year), 
+#                               year_bin = year_bin))
+
+numpubs0 <- numpubs0 |> 
+  dplyr::group_by(type) |> 
+  dplyr::mutate(
+    pubs = ifelse(is.na(pubs), 0, pubs),
+    pubs_cumsum = cumsum(pubs), 
+    pubs = ifelse(pubs == 0, NA, pubs) ) |> 
+  dplyr::ungroup() |> 
   dplyr::left_join(data.frame(year = unique(numpubs0$year), 
-                              year_bin = year_bin))
+                              year_bin = year_bin)) 
+
+# regular
+# type_order <- c("All FIS", 
+#                 numpubs0 |> 
+#   dplyr::filter(!is.na(pubs)) |> 
+#   dplyr::filter(type != "All FIS") |> 
+#   dplyr::group_by(type) |> 
+#   dplyr::summarise(year_min = min(year, na.rm = TRUE)) |> 
+#   dplyr::ungroup() |> 
+#   dplyr::arrange((year_min)) |> 
+#   dplyr::select(type) |> 
+#   unlist())
+# 
+# numpubs0$type <- factor(x = numpubs0$type,
+#                         levels = type_order, 
+#                         labels = type_order, 
+#                         ordered = TRUE)
+
+# cumsum to first 100
+type_order <- c("All FIS", 
+                numpubs0 |> 
+  dplyr::filter(!is.na(pubs)) |> 
+  dplyr::filter(type != "All FIS") |> 
+  dplyr::filter(pubs_cumsum > 99) |> 
+  dplyr::group_by(type) |> 
+  dplyr::summarise(year_min = min(year, na.rm = TRUE)) |> 
+  dplyr::ungroup() |> 
+  dplyr::arrange((year_min)) |> 
+  dplyr::select(type) |> 
+  unlist())
+
+numpubs0$type <- factor(x = numpubs0$type,
+                        levels = type_order, 
+                        labels = type_order, 
+                        ordered = TRUE)
 
 # # Find first entry in table
-# temp <- numpubs0 %>% 
+# temp <- numpubs0 |> 
 #   tidyr::pivot_wider(names_from = "type", id_cols = "year", values_from = "pubs") 
 # temp <- temp[order(temp$year),]
 # temp$nas <- rowSums(is.na(temp[,-1]))
 # min(temp$year[temp$nas != (ncol(temp)-2)])  
 # 
-# numpubs0 <- numpubs0 %>% 
+# numpubs0 <- numpubs0 |> 
 #   dplyr::filter(year >= min(temp$year[temp$nas != (ncol(temp)-2)]) )
 
 
 plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FALSE, voption = "D") {
   
-  pp1 <- ggplot2::ggplot() + 
+    if (cumsum) {
+  pp1 <- ggplot2::ggplot(
+    data = numpubs0 |> 
+    # dplyr::filter(year != 2024) |>
+    dplyr::filter(!(type %in% c("Worldwide BTS", "NOAA BTS"))),
+    mapping = aes(x = year, y = pubs_cumsum, color = type)) 
+  } else {
+  pp1 <- ggplot2::ggplot(      
+    data = numpubs0 |> 
+    # dplyr::filter(year != 2024) |>
+    dplyr::filter(!(type %in% c("Worldwide BTS", "NOAA BTS"))),
+    mapping = aes(x = year, y = pubs, color = type)) 
+  }
+  
+  pp1 <- pp1 + 
     ggplot2::geom_line(
-      data = numpubs0 %>% 
-    # dplyr::filter(year != 2024) %>%
-    dplyr::filter(type != "All FIS"), 
-    mapping = aes(x = year, y = pubs, color = type),
-    linewidth = 2, 
+    linewidth = 1, 
                        na.rm = TRUE, 
                        show.legend = TRUE) + 
     ggplot2::scale_color_viridis_d(option = voption, name = "") 
   
+  # pp1 <- ggplot2::ggplot() + 
+  #   ggplot2::geom_line(
+  #     data = numpubs0 |> 
+  #   # dplyr::filter(year != 2024) |>
+  #   dplyr::filter(type != "All FIS"), 
+  #   mapping = aes(x = year, y = pubs, color = type),
+  #   linewidth = 2, 
+  #                      na.rm = TRUE, 
+  #                      show.legend = TRUE) + 
+  #   ggplot2::scale_color_viridis_d(option = voption, name = "") 
+  
   if (allfis_a) {
     pp1 <- pp1 +
       ggplot2::geom_point(
-        data = numpubs0 %>%
-        # dplyr::filter(year != 2024) %>%
+        data = numpubs0 |>
+        # dplyr::filter(year != 2024) |>
         dplyr::filter(type == "All FIS"),
         mapping = aes(x = year, y = pubs , fill = type), 
         size = 2,
@@ -1717,8 +1783,8 @@ plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FA
   
   if (log_a) {
     # pp1 <- pp1 + ggplot2::scale_y_continuous(labels = scales::comma(), trans='log2', name = "")
-    pp1 <- pp1 + ggplot2::scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))), trans='log2', name = "")
-
+    # pp1 <- pp1 + ggplot2::scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))), trans='log2', name = "")
+    pp1 <- pp1 + ggplot2::scale_y_log10(name = "") # WHERE I LEFT OFF
   } else {
     pp1 <- pp1 + ggplot2::scale_y_continuous(labels = scales::comma, name = "") 
   }
@@ -1731,7 +1797,7 @@ plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FA
         title = "", 
         position = "bottom", 
         reverse = TRUE, 
-        drop = TRUE, 
+        # drop = TRUE, 
         nrow = 1),
       fill = guide_legend(
         override.aes = list(linetype = c(0) ) , 
@@ -1739,27 +1805,28 @@ plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FA
         position = "bottom", 
         # reverse = TRUE,
         nrow = 1)) +  
-    ggplot2::ggtitle(paste0("A) Number of Publications", ifelse(log_a, " (Log2)", ""))) +
+    ggplot2::ggtitle(paste0("A) ", ifelse(cumsum, "Cummulative ", ""), "Number of Publications", ifelse(log_a, " (log2)", ""))) +
     ggplot2::xlab("Years") +
+    # ggplot2::scale_x_continuous()
     ggplot2::theme_classic() + 
     ggplot2::theme(legend.box.margin = margin(0, 0, 0, 0), 
-                   panel.grid.major.y = element_line()) 
+                   panel.grid.major.y = element_line(colour = "grey90", linewidth = 0.5)) 
   
   if (yr5bin_b) {
     pp2 <- ggplot2::ggplot(
-      data = numpubs0 %>% 
-      dplyr::filter(type != "All FIS") %>%
-      dplyr::group_by(type, year_bin) %>%
-      dplyr::reframe(pubs = sum(pubs, na.rm = TRUE)) %>%
+      data = numpubs0 |> 
+      dplyr::filter(type != "All FIS") |>
+      dplyr::group_by(type, year_bin) |>
+      dplyr::reframe(pubs = sum(pubs, na.rm = TRUE)) |>
       dplyr::ungroup(),
-      # dplyr::select(-year_bin) %>%
+      # dplyr::select(-year_bin) |>
       # dplyr::rename(year_bin = year),
       mapping = aes(x = year_bin, y = pubs, fill = type)) 
   } else {
     pp2 <- ggplot2::ggplot(
-      data = numpubs0 %>% 
-      dplyr::filter(type != "All FIS") %>%
-      dplyr::select(-year_bin) %>%
+      data = numpubs0 |> 
+      dplyr::filter(type != "All FIS") |>
+      dplyr::select(-year_bin) |>
       dplyr::rename(year_bin = year),
       mapping = aes(x = year_bin, y = pubs, fill = type))   
   }
@@ -1770,7 +1837,7 @@ plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FA
       stat="identity") + 
     ggplot2::scale_fill_viridis_d(option = voption) + 
     ggplot2::ylab("") + 
-    ggplot2::ggtitle("B) Percent of Publications (%)") +
+    ggplot2::ggtitle("B) Percent of Publications Types (%)") +
     ggplot2::xlab("5-Year Bins") +
     ggplot2::theme_classic() + 
     ggplot2::scale_y_continuous(labels = function(x) paste0(x*100, "%")) + # Multiply by 100 & add %  
@@ -1781,14 +1848,14 @@ plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FA
       nrow = 1)) +  
     ggplot2::theme(legend.box.margin = margin(0, 0, 0, 0)) 
   
-  # pp_legend <- cowplot::get_legend(pp2 + 
+   # pp_legend <- cowplot::get_legend(pp2 + 
   #   ggplot2::guides(fill=guide_legend(position = "bottom")) )
   
   # if (allfis_a) {
   pp1_legend <- get_plot_component(
     plot = pp1, 
     "guide-box", 
-    return_all = TRUE)[[3]]
+    return_all = TRUE) # [[3]]
   # }
   
   # pp2_legend <- get_plot_component(
@@ -1828,7 +1895,7 @@ p1 <- plot_figure(numpubs0 = numpubs0,
 p2 <- plot_figure(numpubs0 = numpubs0, 
                   log_a = FALSE, allfis_a = FALSE, yr5bin_b = FALSE, voption = voption) 
 p3 <- plot_figure(numpubs0 = numpubs0, 
-                  log_a = TRUE, allfis_a = TRUE, yr5bin_b = TRUE, voption = voption) 
+                  log_a = TRUE, allfis_a = TRUE, yr5bin_b = TRUE, voption = voption) # this is the one we landed on
 p4 <- plot_figure(numpubs0 = numpubs0, 
                   log_a = TRUE, allfis_a = FALSE, yr5bin_b = FALSE, voption = voption)
 }
@@ -1880,8 +1947,8 @@ for (searches0 in c(1:length(searches$search))) {
     print(yr)
     url <- paste0("https://scholar.google.com/scholar?q=",searches$search[searches0],"&as_ylo=",yr,"&as_yhi=", yr)
     
-    page <- read_html(url) %>%
-      html_nodes(".gs_ab_mdw") %>%
+    page <- read_html(url) |>
+      html_nodes(".gs_ab_mdw") |>
       html_text()
     
     numpubs <- dplyr::bind_rows(
@@ -1908,9 +1975,9 @@ library(cowplot)
 library(scales)
 
 numpubs0 <- c()
-for (i in c(1:4)) {
+for (i in c(1:10)) {
   numpubs0 <- dplyr::bind_rows(numpubs0, 
-                               read.csv(file = here::here("data", paste0("bts_numpubs_",i,".csv"))) %>% 
+                               read.csv(file = here::here("data", paste0("bts_numpubs_",i,".csv"))) |> 
                                dplyr::select(type, year, pubs))
 }
 
@@ -1937,29 +2004,45 @@ for (i in unique(numpubs0$year)) {
                 ) )
 }
 
-numpubs0 <- numpubs0 %>% 
+numpubs0 <- numpubs0 |> 
+  # dplyr::group_by(type) |> 
+  # dplyr::mutate(
+  #   pubs = ifelse(is.na(pubs), 0, pubs),
+  #   pubs_cumsum = cumsum(pubs), 
+  #   pubs = ifelse(pubs == 0, pubs, NA) ) |> 
+  # dplyr::ungroup() |> 
   dplyr::left_join(data.frame(year = unique(numpubs0$year), 
-                              year_bin = year_bin))
+                              year_bin = year_bin)) 
 
 # # Find first entry in table
-# temp <- numpubs0 %>% 
+# temp <- numpubs0 |> 
 #   tidyr::pivot_wider(names_from = "type", id_cols = "year", values_from = "pubs") 
 # temp <- temp[order(temp$year),]
 # temp$nas <- rowSums(is.na(temp[,-1]))
 # min(temp$year[temp$nas != (ncol(temp)-2)])  
 # 
-# numpubs0 <- numpubs0 %>% 
+# numpubs0 <- numpubs0 |> 
 #   dplyr::filter(year >= min(temp$year[temp$nas != (ncol(temp)-2)]) )
 
 
-plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FALSE, voption = "D") {
+plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FALSE, cumsum = FALSE, voption = "D") {
   
-  pp1 <- ggplot2::ggplot() + 
-    ggplot2::geom_line(
-      data = numpubs0 %>% 
-    # dplyr::filter(year != 2024) %>%
+  if (cumsum) {
+  pp1 <- ggplot2::ggplot(
+    data = numpubs0 |> 
+    # dplyr::filter(year != 2024) |>
     dplyr::filter(!(type %in% c("Worldwide BTS", "NOAA BTS"))),
-    mapping = aes(x = year, y = pubs, color = type),
+    mapping = aes(x = year, y = pubs, color = type)) 
+  } else {
+  pp1 <- ggplot2::ggplot(      
+    data = numpubs0 |> 
+    # dplyr::filter(year != 2024) |>
+    dplyr::filter(!(type %in% c("Worldwide BTS", "NOAA BTS"))),
+    mapping = aes(x = year, y = pubs, color = type)) 
+  }
+  
+  pp1 <- pp1 + 
+    ggplot2::geom_line(
     linewidth = 2, 
                        na.rm = TRUE, 
                        show.legend = TRUE) + 
@@ -1968,8 +2051,8 @@ plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FA
   # if (allfis_a) {
   #   pp1 <- pp1 +
   #     ggplot2::geom_point(
-  #       data = numpubs0 %>%
-  #       # dplyr::filter(year != 2024) %>%
+  #       data = numpubs0 |>
+  #       # dplyr::filter(year != 2024) |>
   #       dplyr::filter(type %in% c("Worldwide BTS", "NOAA BTS")),
   #       mapping = aes(x = year, y = pubs , fill = type), 
   #       size = 2,
@@ -2009,19 +2092,19 @@ plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FA
   
   if (yr5bin_b) {
     pp2 <- ggplot2::ggplot(
-      data = numpubs0 %>% 
-      dplyr::filter(!type %in% c("Worldwide BTS", "NOAA BTS")) %>%
-      dplyr::group_by(type, year_bin) %>%
-      dplyr::reframe(pubs = sum(pubs, na.rm = TRUE)) %>%
+      data = numpubs0 |> 
+      dplyr::filter(!type %in% c("Worldwide BTS", "NOAA BTS")) |>
+      dplyr::group_by(type, year_bin) |>
+      dplyr::reframe(pubs = sum(pubs, na.rm = TRUE)) |>
       dplyr::ungroup(),
-      # dplyr::select(-year_bin) %>%
+      # dplyr::select(-year_bin) |>
       # dplyr::rename(year_bin = year),
       mapping = aes(x = year_bin, y = pubs, fill = type)) 
   } else {
     pp2 <- ggplot2::ggplot(
-      data = numpubs0 %>% 
-      dplyr::filter(!type %in% c("Worldwide BTS", "NOAA BTS")) %>%
-      dplyr::select(-year_bin) %>%
+      data = numpubs0 |> 
+      dplyr::filter(!type %in% c("Worldwide BTS", "NOAA BTS")) |>
+      dplyr::select(-year_bin) |>
       dplyr::rename(year_bin = year),
       mapping = aes(x = year_bin, y = pubs, fill = type))   
   }
@@ -2078,13 +2161,26 @@ plot_figure <- function(numpubs0, log_a = FALSE, allfis_a = FALSE, yr5bin_b = FA
 
 for (voption in c("D", "G", "E")) {
 p1 <- plot_figure(numpubs0 = numpubs0, 
-                  log_a = FALSE, allfis_a = TRUE, yr5bin_b = TRUE, voption = voption)
+                  log_a = FALSE, allfis_a = TRUE, yr5bin_b = TRUE, cumsum = FALSE, voption = voption)
 p2 <- plot_figure(numpubs0 = numpubs0, 
-                  log_a = FALSE, allfis_a = FALSE, yr5bin_b = FALSE, voption = voption) 
+                  log_a = FALSE, allfis_a = FALSE, yr5bin_b = FALSE, cumsum = FALSE, voption = voption) 
 p3 <- plot_figure(numpubs0 = numpubs0, 
-                  log_a = TRUE, allfis_a = TRUE, yr5bin_b = TRUE, voption = voption) 
+                  log_a = TRUE, allfis_a = TRUE, yr5bin_b = TRUE, cumsum = FALSE, voption = voption) 
 p4 <- plot_figure(numpubs0 = numpubs0, 
-                  log_a = TRUE, allfis_a = FALSE, yr5bin_b = FALSE, voption = voption)
+                  log_a = TRUE, allfis_a = FALSE, yr5bin_b = FALSE, cumsum = FALSE, voption = voption)
+p5 <- plot_figure(numpubs0 = numpubs0, 
+                  log_a = TRUE, allfis_a = FALSE, yr5bin_b = TRUE, cumsum = FALSE, voption = voption)
+
+p1c <- plot_figure(numpubs0 = numpubs0, 
+                  log_a = FALSE, allfis_a = TRUE, yr5bin_b = TRUE, cumsum = TRUE, voption = voption)
+p2c <- plot_figure(numpubs0 = numpubs0, 
+                  log_a = FALSE, allfis_a = FALSE, yr5bin_b = FALSE, cumsum = TRUE, voption = voption) 
+p3c <- plot_figure(numpubs0 = numpubs0, 
+                  log_a = TRUE, allfis_a = TRUE, yr5bin_b = TRUE, cumsum = TRUE, voption = voption) 
+p4c <- plot_figure(numpubs0 = numpubs0, 
+                  log_a = TRUE, allfis_a = FALSE, yr5bin_b = FALSE, cumsum = TRUE, voption = voption)
+p5 <- plot_figure(numpubs0 = numpubs0, 
+                  log_a = TRUE, allfis_a = FALSE, yr5bin_b = TRUE, cumsum = TRUE, voption = voption)
 }
 
 p5 <- plot_figure(numpubs0 = numpubs0, 
