@@ -204,6 +204,7 @@ numpubs0$type <- factor(x = numpubs0$type,
 library(ggplot2)
 library(cowplot)
 library(scales)
+library(see)
 
 plot_figure <- function(numpubs0, 
                         log_a = FALSE, 
@@ -214,8 +215,9 @@ plot_figure <- function(numpubs0,
   
   dat <- numpubs0 |> 
     # dplyr::filter(year != 2024) |>
+    # dplyr::mutate(linetype0 = ifelse(type == "All FIS", "Y", "N")) |> 
     dplyr::filter(!(type %in% 
-                      c("Worldwide BTS", "NOAA BTS", ifelse(allfis_a, "All FIS", NA))))
+                      c("Worldwide BTS", "NOAA BTS", ifelse(allfis_a, "All FIS", NA)))) # 
   if (cumsum0) {
     pp1 <- ggplot2::ggplot(
       data = dat,
@@ -230,9 +232,15 @@ plot_figure <- function(numpubs0,
     ggplot2::geom_line(
       linewidth = 1, 
       na.rm = TRUE, 
-      show.legend = TRUE) + 
-    ggplot2::scale_color_viridis_d(option = voption, name = "") 
+      show.legend = TRUE) 
   
+  if(voption %in% c("O")) {
+    pp1 <- pp1 + 
+      scale_color_oi(palette = "black_first")
+    } else {  
+      pp1 <- pp1 + 
+        ggplot2::scale_color_viridis_d(option = voption, name = "")
+    }
   if (allfis_a) {
     if (cumsum0) {
       pp1 <- pp1 +
@@ -241,9 +249,10 @@ plot_figure <- function(numpubs0,
             # dplyr::filter(year != 2024) |>
             dplyr::filter(type == "All FIS"),
           mapping = aes(x = year, y = pubs_cumsum , fill = type), 
-          size = 2,
-          show.legend = TRUE) +
-        ggplot2::scale_fill_grey(name = " ")      
+          size = .75,
+          color = "red", 
+          show.legend = TRUE) #+
+        # ggplot2::scale_fill_grey(name = " ")      
     } else {
     pp1 <- pp1 +
       ggplot2::geom_point(
@@ -251,9 +260,10 @@ plot_figure <- function(numpubs0,
           # dplyr::filter(year != 2024) |>
           dplyr::filter(type == "All FIS"),
         mapping = aes(x = year, y = pubs , fill = type), 
-        size = 2,
-        show.legend = TRUE) +
-      ggplot2::scale_fill_grey(name = " ")
+        size = .75,
+        color = "red", 
+        show.legend = TRUE) #+
+      # ggplot2::scale_fill_grey(name = " ")
   } 
   }
   
@@ -261,24 +271,24 @@ plot_figure <- function(numpubs0,
     # pp1 <- pp1 + ggplot2::scale_y_continuous(labels = scales::comma(), trans='log2', name = "")
     pp1 <- pp1 + 
       scale_y_continuous(
-        trans = "log2",
+        trans = "log10",
         # labels = scales::math_format(2^.x, format = log2), 
         name = "", 
         expand = c(0, 0), 
           # trans = "log2", 
           # Use breaks_log for appropriate log scale breaks
-          breaks = scales::breaks_log(n = 6, base = 2),
+          breaks = scales::breaks_log(n = 6, base = 10),
           # Use label_comma to format labels without scientific notation
         # labels = scales::breaks_log, 
           labels = label_comma(accuracy = 10) 
         )
       
     
-    pp1 <- pp1 +
-      ggplot2::scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))),
-                                  trans = 'log2',
-                                  name = "",
-                                  expand = c(0, 0))  # Removes expansion at both ends of the y-axis
+    # pp1 <- pp1 +
+    #   ggplot2::scale_y_continuous(breaks = function(x) unique(floor(pretty(seq(min(x), (max(x) + 1) * 1.1)))),
+    #                               trans = 'log2',
+    #                               name = "",
+    #                               expand = c(0, 0))  # Removes expansion at both ends of the y-axis
     # pp1 <- pp1 + ggplot2::scale_y_log10(name = "",
     #   expand = c(0, 0))  # Removes expansion at both ends of the y-axis 
   } else {
@@ -305,7 +315,7 @@ plot_figure <- function(numpubs0,
         position = "bottom", 
         # reverse = TRUE,
         nrow = 1)) +  
-    ggplot2::ggtitle(paste0("A) ", ifelse(cumsum0, "Cummulative ", ""), "Number of Publications", ifelse(log_a, " (log2 Transformed)", ""))) +
+    ggplot2::ggtitle(paste0("A) ", ifelse(cumsum0, "Cummulative ", ""), "Number of Publications", ifelse(log_a, " (log10)", ""))) +
     ggplot2::xlab("Years") +
     # ggplot2::scale_x_continuous()
     ggplot2::theme_classic() + 
@@ -331,12 +341,19 @@ plot_figure <- function(numpubs0,
       mapping = aes(x = year_bin, y = pubs, fill = type))   
   }
   
+  if(voption %in% c("O")) {
+    pp2 <- pp2 + 
+      scale_fill_oi(palette = "black_first")
+  } else {  
+    pp2 <- pp2 + 
+      ggplot2::scale_fill_viridis_d(option = voption)
+  }
+  
   pp2 <- pp2 +  
     ggplot2::geom_bar(#position = "fill", 
       position = position_fill(reverse = TRUE), 
       stat="identity") + 
-    ggplot2::scale_fill_viridis_d(option = voption) + 
-    ggplot2::ggtitle("B) Percent of Publications Types (%)") +
+    ggplot2::ggtitle("B) Summed Percent of Publications by Survey Type (%)") +
     ggplot2::xlab("5-Year Bins") +
     ggplot2::theme_classic() + 
     ggplot2::scale_y_continuous(
@@ -399,7 +416,7 @@ plot_figure <- function(numpubs0,
 
 # Okabe & Ito (2008) color-blind proof palette should have 9 categories. That, are align text labels with the lines and fill categories. The paired scheme (or similar) in ColorBrewer might be another option.
 
-for (voption in c("D", "G", "E")) {
+for (voption in c("D", "G", "E", "O")) {
   p1 <- plot_figure(numpubs0 = numpubs0, 
                     log_a = FALSE, allfis_a = TRUE, yr5bin_b = TRUE, cumsum0 = FALSE, voption = voption)
   # p2 <- plot_figure(numpubs0 = numpubs0, 
@@ -410,7 +427,7 @@ for (voption in c("D", "G", "E")) {
   #                   log_a = TRUE, allfis_a = FALSE, yr5bin_b = FALSE, cumsum0 = FALSE, voption = voption)
   
   p1c <- plot_figure(numpubs0 = numpubs0, 
-                    log_a = FALSE, allfis_a = FALSE, yr5bin_b = TRUE, cumsum0 = TRUE, voption = voption) # this is the one we landed on
+                    log_a = FALSE, allfis_a = TRUE, yr5bin_b = TRUE, cumsum0 = TRUE, voption = voption) # this is the one we landed on
   # p2c <- plot_figure(numpubs0 = numpubs0, 
   #                   log_a = FALSE, allfis_a = FALSE, yr5bin_b = FALSE, cumsum0 = TRUE, voption = voption) 
   p3c <- plot_figure(numpubs0 = numpubs0, 
@@ -419,5 +436,9 @@ for (voption in c("D", "G", "E")) {
   #                   log_a = TRUE, allfis_a = FALSE, yr5bin_b = FALSE, cumsum0 = TRUE, voption = voption)
 }
 
+
+# Final figure
+p3c <- plot_figure(numpubs0 = numpubs0, 
+                   log_a = TRUE, allfis_a = TRUE, yr5bin_b = TRUE, cumsum0 = TRUE, voption = "O") 
 
 
