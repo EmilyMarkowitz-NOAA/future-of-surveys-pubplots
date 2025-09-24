@@ -315,7 +315,7 @@ plot_figure <- function(numpubs0,
         position = "bottom", 
         # reverse = TRUE,
         nrow = 1)) +  
-    ggplot2::ggtitle(paste0("A) ", ifelse(cumsum0, "Cummulative ", ""), "Number of Publications", ifelse(log_a, " (log10)", ""))) +
+    ggplot2::ggtitle((paste0("A) ", ifelse(cumsum0, "Cummulative ", ""), "Number of Publications", ifelse(log_a, " (log10)", "")))) +
     ggplot2::xlab("Years") +
     # ggplot2::scale_x_continuous()
     ggplot2::theme_classic() + 
@@ -353,7 +353,7 @@ plot_figure <- function(numpubs0,
     ggplot2::geom_bar(#position = "fill", 
       position = position_fill(reverse = TRUE), 
       stat="identity") + 
-    ggplot2::ggtitle("B) Summed Percent of Publications by Survey Type (%)") +
+    ggplot2::ggtitle("B) Percent of Publications by Survey Type (%)") +
     ggplot2::xlab("5-Year Bins") +
     ggplot2::theme_classic() + 
     ggplot2::scale_y_continuous(
